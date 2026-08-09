@@ -178,21 +178,42 @@ install_cosign() {
 }
 
 install_shell_helpers() {
-  local rc="$HOME/.bashrc"
-  if grep -q 'start_kubectl k' "$rc" 2>/dev/null; then
+  local shell_path shell_name rc
+  shell_path="$(getent passwd "$USER" | cut -d: -f7)"
+  shell_name="$(basename "$shell_path")"
+  rc="$HOME/.${shell_name}rc"
+  local completion_line alias_line
+  case "$shell_name" in
+    zsh)
+      completion_line='source <(kubectl completion zsh)'
+      alias_line='compdef __start_kubectl k'
+      ;;
+    bash)
+      completion_line='source <(kubectl completion bash)'
+      alias_line='complete -o default -F __start_kubectl k'
+      ;;
+    *)
+      warn "shell no soportado para autocompletado: $shell_name"
+      return
+      ;;
+  esac
+
+  if grep -q 'devops-sre-mastery bootstrap' "$rc" 2>/dev/null; then
     present "kubectl completion and alias"
     return
   fi
+
   if [ -n "$DRY_RUN" ]; then
     log "${DIM}would append kubectl completion to $rc${RESET}"
     return
   fi
+
   {
     echo ''
     echo '# added by devops-sre-mastery bootstrap'
-    echo 'source <(kubectl completion bash)'
+    echo "$completion_line"
     echo 'alias k=kubectl'
-    echo 'complete -o default -F __start_kubectl k'
+    echo "$alias_line"
   } >> "$rc"
   changed "kubectl completion and alias (restart your shell)"
 }
