@@ -37,8 +37,16 @@ wsl --shutdown
 
 ## Expected outcome
 
-`free -h` shows your new total. Record the before and after in `NOTAS.md`,
-including which cluster profile you are committing to for the rest of the track.
+`free -h` shows your new total. Record the before and after in `NOTAS.md`.
+
+Then answer the question that actually matters: **can you afford `standard`?**
+That is the profile modules 07–13 run on, and module 07 is where this track peaks.
+Check your new total against the profile table in
+[`SETUP.md`](../../../SETUP.md#4-cluster-profiles) and commit to `lite` or
+`standard` in `NOTAS.md`.
+
+`ha` is not an answer here — it exists for a single lab in module 06 and is torn
+down at the end of it.
 
 ## Verification
 
