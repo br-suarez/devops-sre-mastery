@@ -1,7 +1,7 @@
 # PLAN — Calendario semana por semana
 
-**Inicio:** jueves 2026-08-06  (primera sesión)
-**Objetivo:** miércoles 2027-02-17
+**Inicio:** martes 2026-08-11  (primera sesión)
+**Objetivo:** martes 2027-03-02
 **Ritmo:** 3 bloques de 120 min — **martes, miércoles y jueves, 19:00–21:00** = 6 h/semana
 
 ---
@@ -13,8 +13,8 @@ cada módulo decide en cuál estás.
 
 | Ruta | Bloques | Semanas | Fin |
 |---|---|---|---|
-| **A — con diagnósticos aprobados** (la esperada para ti) | 72 | 25 contenido + 4 reserva = 29 | **2027-02-17** |
-| **B — módulo completo, sin saltar nada** (principiante) | 96 | 29 contenido + 4 reserva = 33 | 2027-03-24 |
+| **A — con diagnósticos aprobados** (la esperada para ti) | 72 | 25 contenido + 5 reserva = 30 | **2027-03-02** |
+| **B — módulo completo, sin saltar nada** (principiante) | 96 | 32 contenido + 5 reserva = 37 | 2027-04-22 |
 
 La ruta A asume que apruebas el diagnóstico de los módulos 01, 03, 04, 11 y 13 —
 razonable dado el trabajo de `archive/sre-track/`. **Si no lo apruebas, no pasa
@@ -85,50 +85,83 @@ Leyenda de bloques: `05×3` = tres bloques del módulo 05 esa semana.
 
 | Sem | Lunes | Bloques | Hito |
 |---|---|---|---|
-| 1 | 2026-08-03 | `00×1` | Entorno reproducible |
-| 2 | 2026-08-10 | `00×1` `01×2` | Harness `verify.sh` terminado |
-| 3 | 2026-08-17 | `02×3` | **Pulse tras NGINX con TLS** |
-| 4 | 2026-08-24 | `02×1` `03×2` | **Compose, imágenes distroless** |
-| 5 | 2026-08-31 | `04×2` `05×1` | **NGINX sustituido por Gateway API** |
-| 6 | 2026-09-07 | `05×3` | **NGINX sustituido por Gateway API** |
-| 7 | 2026-09-14 | `05×1` `06×2` | **Postgres con estado, drill de backup** |
-| 8 | 2026-09-21 | — | 🟡 **RESERVA** + repaso espaciado |
-| 9 | 2026-09-28 | `06×3` | **Postgres con estado, drill de backup** |
-| 10 | 2026-10-05 | `07×3` | **SLO y recording rule 8s → <1s** |
-| 11 | 2026-10-12 | `07×1` `08×2` | **Trazas propias, exemplars** |
-| 12 | 2026-10-19 | `08×3` | **Trazas propias, exemplars** |
-| 13 | 2026-10-26 | `08×1` `08b×2` | **Flamegraph de un pod vivo** |
-| 14 | 2026-11-02 | — | 🟡 **RESERVA** + repaso espaciado |
-| 15 | 2026-11-09 | `08b×2` `08c×1` | 🔥 **Game Day I + postmortem** |
-| 16 | 2026-11-16 | `08c×1` `09×2` | **Pipeline verde con SBOM** |
-| 17 | 2026-11-23 | `09×2` `10×1` | **Argo CD gobierna el cluster** |
-| 18 | 2026-11-30 | `10×3` | **Argo CD gobierna el cluster** |
-| 19 | 2026-12-07 | `10×1` `11×2` | **Canary con rollback por SLO** |
-| 20 | 2026-12-14 | `12×3` | **Solo imágenes firmadas** |
-| 21 | 2026-12-21 | — | 🎄 **RESERVA** — Navidad |
-| 22 | 2026-12-28 | — | 🎄 **RESERVA** — Navidad |
-| 23 | 2027-01-04 | `12×2` `13×1` | Infra como módulos Terraform |
-| 24 | 2027-01-11 | `13×2` `14×1` | **Pulse en GKE, y destruido** |
-| 25 | 2027-01-18 | `14×3` | **Pulse en GKE, y destruido** |
-| 26 | 2027-01-25 | `14×3` | **Pulse en GKE, y destruido** |
-| 27 | 2027-02-01 | `15×3` | Comparativa Jenkins vs Actions |
-| 28 | 2027-02-08 | `16×3` | 🏁 **Game Day II + arquitectura** |
-| 29 | 2027-02-15 | `16×2` | 🏁 **Game Day II + arquitectura** |
+| 1 | 2026-08-10 | `00×2` `01×1` | Entorno reproducible |
+| 2 | 2026-08-17 | `01×1` `02×2` | Harness `verify.sh` terminado |
+| 3 | 2026-08-24 | `02×2` `03×1` | **Pulse tras NGINX con TLS** |
+| 4 | 2026-08-31 | `03×1` `04×2` | **Compose, distroless, Pulse en kind** |
+| 5 | 2026-09-07 | `05×3` | **NGINX sustituido por Gateway API** |
+| 6 | 2026-09-14 | `05×2` `06×1` | **NGINX sustituido por Gateway API** |
+| 7 | 2026-09-21 | `06×3` | **Postgres con estado, drill de backup** |
+| 8 | 2026-09-28 | — | 🟡 **RESERVA** + repaso espaciado |
+| 9 | 2026-10-05 | `06×1` `07×2` | **Postgres con estado, drill de backup** |
+| 10 | 2026-10-12 | `07×2` `08×1` | **SLO y recording rule 8s → <1s** |
+| 11 | 2026-10-19 | `08×3` | **Trazas propias, exemplars** |
+| 12 | 2026-10-26 | `08×2` `08b×1` | **Trazas propias, exemplars** |
+| 13 | 2026-11-02 | `08b×3` | **Flamegraph de un pod vivo** |
+| 14 | 2026-11-09 | — | 🟡 **RESERVA** + repaso espaciado |
+| 15 | 2026-11-16 | `08c×2` `09×1` | 🔥 **Game Day I + postmortem** |
+| 16 | 2026-11-23 | `09×3` | **Pipeline verde con SBOM** |
+| 17 | 2026-11-30 | `10×3` | **Argo CD gobierna el cluster** |
+| 18 | 2026-12-07 | `10×2` + consolidación | **Argo CD gobierna el cluster** + checkpoint pre-parón |
+| 19 | 2026-12-14 | — | 🎄 **RESERVA** — Navidad |
+| 20 | 2026-12-21 | — | 🎄 **RESERVA** — Navidad |
+| 21 | 2026-12-28 | — | 🎄 **RESERVA** — Navidad |
+| 22 | 2027-01-04 | `11×2` `12×1` | **Canary con rollback por SLO** |
+| 23 | 2027-01-11 | `12×3` | **Solo imágenes firmadas** |
+| 24 | 2027-01-18 | `12×1` `13×2` | Infra como módulos Terraform |
+| 25 | 2027-01-25 | `13×1` `14×2` | **Pulse en GKE, y destruido** |
+| 26 | 2027-02-01 | `14×3` | **Pulse en GKE, y destruido** |
+| 27 | 2027-02-08 | `14×2` `15×1` | **Pulse en GKE, y destruido** |
+| 28 | 2027-02-15 | `15×2` `16×1` | Comparativa Jenkins vs Actions |
+| 29 | 2027-02-22 | `16×3` | 🏁 **Game Day II + arquitectura** |
+| 30 | 2027-03-01 | `16×1` | 🏁 **Game Day II + arquitectura** |
 
-Las semanas 21 y 22 son reserva por calendario, no por diseño. Si llegas
+Las semanas 19, 20 y 21 son reserva por calendario, no por diseño. Si llegas
 adelantado, adelanta el módulo 14 — es el único con costo y conviene ejecutarlo
 concentrado.
 
-**Sobre el Game Day I (jueves 12 y martes 17 de noviembre):** sus dos bloques
-caen en semanas distintas, y no importa. Los tres labs suman 120 minutos exactos
-—repaso 20 + ronda 60 + postmortem 40— así que **todo el ejercicio cabe en la
-sesión del jueves**, incluido el postmortem. El bloque del martes siguiente es
-para la remediación: implementar la comprobación que faltaba en `verify.sh` y
-verificar que caza el fallo.
+**Sobre el arranque en martes (reprogramado 2026-08-09).** El calendario anterior
+empezaba un jueves, así que su semana 1 tenía un solo bloque de los tres
+disponibles. Arrancar en martes recupera esos dos bloques y el track pasa de 29
+semanas a 28 sin comprimir contenido: los 72 bloques de la ruta A son ahora 24
+semanas de 3 bloques más las 4 de reserva, exacto. La fecha objetivo se mueve un
+día, del miércoles 17 al jueves 18 de febrero.
+
+**Sobre el Game Day I (semana 15, martes 17 y miércoles 18 de noviembre):** los
+tres labs suman 120 minutos exactos —repaso 20 + ronda 60 + postmortem 40— así
+que **todo el ejercicio cabe en la sesión del martes**, incluido el postmortem.
+El bloque del miércoles es para la remediación: implementar la comprobación que
+faltaba en `verify.sh` y verificar que caza el fallo.
 
 Lo que no se puede partir es el incidente y su postmortem. Escrito cinco días
 después es ficción — te acuerdas de la versión ordenada, no de los callejones sin
-salida, que son la parte útil.
+salida, que son la parte útil. Con el arranque en martes los dos bloques caen en
+días consecutivos de la misma semana, que es la mejor colocación posible: antes
+estaban separados por un fin de semana y un cambio de semana.
+
+**Sobre el parón de Navidad (revisado 2026-08-09).** Son **tres** semanas de
+reserva seguidas —14, 21 y 28 de diciembre—, no dos. La semana del 14 se declaró
+reserva porque no es tiempo de estudio real, y declararlo por adelantado es mejor
+que arrastrar el atraso en enero fingiendo que sí lo era.
+
+La consecuencia es que **ningún módulo cruza el hueco**: el 10 cierra el 9 de
+diciembre y el 11 arranca entero el 5 de enero. Eso importa más de lo que parece
+— el módulo 11 son dos bloques que montan un canary con análisis contra el SLO
+del módulo 07, y partirlo por un parón de tres semanas significaría volver en
+enero a un `Rollout` a medio configurar sin acordarte de por qué.
+
+El precio son **dos semanas de calendario**: una es la reserva nueva, y la otra
+sale de que los 47 bloques hasta el módulo 10 no llenan las 16 semanas de
+contenido previas al parón. Sobra exactamente un bloque, y ese es el de
+consolidación de la semana 18.
+
+**El bloque de consolidación (jueves 10 de diciembre)** no es relleno. Vas a
+dejar la plataforma sola tres semanas, así que ese bloque es: `checkpoint.sh save
+10`, levantar Pulse desde cero contra el checkpoint para comprobar que el estado
+bueno conocido lo es de verdad, y repasar la capa de observabilidad (07–08b) que
+para entonces llevará seis semanas sin tocarse. Volver en enero a una plataforma
+que no arranca es la forma más rápida de perder también la primera semana de
+enero.
 
 **Sobre el Game Day I:** es el cambio de diseño más importante del plan. El
 módulo de mayor valor —depurar algo que no habías visto, bajo presión— estaba
@@ -137,9 +170,10 @@ hay uno a mitad de camino, contra un sistema de siete capas en vez de trece, y
 los dos postmortems separados por trece semanas son la medida más honesta de
 progreso de todo el repo.
 
-**Sobre el módulo 08b (eBPF):** se parte entre las semanas 12 y 14 por la reserva
-del medio, y no pasa nada — no es un ejercicio de sesión única. El Game Day sí lo
-es, y por eso se protegió.
+**Sobre el módulo 08b (eBPF):** ahora cae entero y seguido en las semanas 12 y
+13, y la reserva de la semana 14 queda justo entre él y el Game Day I. Esa es
+mejor posición que la anterior: llegas al incidente con el profiling reciente y
+una semana de colchón por si el módulo se alargó.
 
 ---
 
@@ -159,14 +193,23 @@ para el repaso a 30 días.
 Ocupan las semanas de reserva. Fuente: las columnas "comandos que tuve que
 buscar" y "errores que cometí" de cada `NOTAS.md`, más `PREGUNTAS.md`.
 
-| Cuándo | Semana | Repasa | Formato |
-|---|---|---|---|
-| 30 d | 7 | módulos 00–02 | Rehacer el break-fix de memoria, cronometrado |
-| 30 d | 13 | módulos 05–07 | Ídem + preguntas de entrevista en voz alta |
-| 90 d | 13 | módulos 00–02 | Levantar Pulse desde cero sin mirar el README |
-| 30 d | 21 | módulos 08b–12 | Break-fix + explicar trade-offs |
-| 90 d | 21 | módulos 05–08 | Reconstruir la capa de observabilidad de cero |
-| 90 d | 28 | módulos 09–14 | Integrado en el Game Day II |
+| Cuándo | Semana | Fecha | Repasa | Formato |
+|---|---|---|---|---|
+| 30 d | 8 | 2026-09-28 | módulos 00–02 | Rehacer el break-fix de memoria, cronometrado |
+| 30 d | 14 | 2026-11-09 | módulos 05–07 | Ídem + preguntas de entrevista en voz alta |
+| 90 d | 14 | 2026-11-09 | módulos 00–02 | Levantar Pulse desde cero sin mirar el README |
+| 45 d | 18 | 2026-12-10 | módulos 07–08b | Bloque de consolidación pre-parón (ver arriba) |
+| 30 d | 20 | 2026-12-21 | módulos 08b–10 | Break-fix + explicar trade-offs |
+| 90 d | 21 | 2026-12-28 | módulos 05–08 | Reconstruir la capa de observabilidad de cero |
+| 90 d | 29 | 2027-02-22 | módulos 09–14 | Integrado en el Game Day II |
+
+Las cuatro primeras filas caen ahora **dentro** de una semana de reserva, que es
+donde el plan dice que van. En la versión anterior las dos primeras apuntaban a
+semanas de contenido (7 y 13) mientras la reserva estaba en la 8 y la 14, y esa
+sesión de repaso no tenía hueco real donde ocurrir.
+
+El repaso de 30 días de la semana 20 cubre **08b–10**: los módulos 11 y 12 no
+arrancan hasta enero, y no se repasa lo que aún no has hecho.
 
 **La regla del repaso:** si tienes que abrir el README de un módulo que ya
 cerraste, ese módulo no estaba cerrado. Marca su nivel a la baja en `TRACKER.md`

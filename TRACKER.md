@@ -94,12 +94,13 @@ solo acumulando herramientas.
 
 | Fecha prevista | Semana | Tipo | Módulos | Hecho | Qué se me había olvidado |
 |---|---|---|---|---|---|
-| 2026-09-14 | 7 | 30 d | 00–02 | ⬜ | |
-| 2026-10-26 | 13 | 30 d | 05–07 | ⬜ | |
-| 2026-10-26 | 13 | 90 d | 00–02 | ⬜ | |
-| 2026-12-21 | 21 | 30 d | 08b–12 | ⬜ | |
-| 2026-12-21 | 21 | 90 d | 05–08 | ⬜ | |
-| 2027-02-08 | 28 | 90 d | 09–14 | ⬜ | |
+| 2026-09-28 | 8 | 30 d | 00–02 | ⬜ | |
+| 2026-11-09 | 14 | 30 d | 05–07 | ⬜ | |
+| 2026-11-09 | 14 | 90 d | 00–02 | ⬜ | |
+| 2026-12-10 | 18 | 45 d | 07–08b | ⬜ | |
+| 2026-12-21 | 20 | 30 d | 08b–10 | ⬜ | |
+| 2026-12-28 | 21 | 90 d | 05–08 | ⬜ | |
+| 2027-02-22 | 29 | 90 d | 09–14 | ⬜ | |
 
 La última columna es la más valiosa del archivo. Lo que se te olvidó a los 30
 días es lo que se te va a olvidar en una entrevista.
