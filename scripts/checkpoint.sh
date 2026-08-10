@@ -40,8 +40,9 @@ cmd_save() {
   [ -n "$mod" ] || die "usage: $0 save <module>   e.g. 05, 08b"
   tag=$(tag_for "$mod")
 
-  git diff --quiet && git diff --cached --quiet \
-    || die "working tree is dirty — commit your module before checkpointing"
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  die "working tree is dirty — commit your module before checkpointing"
+fi
 
   git rev-parse -q --verify "refs/tags/$tag" >/dev/null \
     && die "$tag already exists. Delete it first if you really mean to move it."
@@ -49,7 +50,8 @@ cmd_save() {
   # Record what the platform looked like, not just the code. When you come back
   # in three months, "which images and which cluster profile" is the question
   # you will actually need answered.
-  local meta="modules-complete: $mod
+  local meta
+  meta="modules-complete: $mod
 date: $(date -Is)
 kind-clusters: $(kind get clusters 2>/dev/null | tr '\n' ' ' || echo 'none')
 images: $(docker images --filter reference='pulse-*' --format '{{.Repository}}:{{.Tag}}@{{.ID}}' 2>/dev/null | tr '\n' ' ' || echo 'none')"
@@ -91,15 +93,15 @@ cmd_restore() {
   local mod=${1:-} tag branch
   [ -n "$mod" ] || die "usage: $0 restore <module>"
   tag=$(tag_for "$mod")
+  if ! git diff --quiet || ! git diff --cached --quiet; then
+    die "working tree is dirty — commit or stash first. Nothing was changed." 
+  fi
   git rev-parse -q --verify "refs/tags/$tag" >/dev/null || die "$tag does not exist"
 
   branch="recover/from-mod-$mod-$(date +%Y%m%d-%H%M)"
-
-  git diff --quiet && git diff --cached --quiet \
-    || die "working tree is dirty — commit or stash first. Nothing was changed."
-
   # A branch, never a detached checkout of the working tree: recovering from a
   # bad state should not be able to destroy the work that got you there.
+  
   git checkout -b "$branch" "$tag"
 
   log ""

@@ -37,6 +37,21 @@ unmark()    { rm -f "$STATE_DIR/active-$1"; }
 is_active() { [ -f "$STATE_DIR/active-$1" ]; }
 have()      { command -v "$1" >/dev/null 2>&1; }
 
+# Restore is best-effort per step: one failed command must not stop the others,
+# because a partial recovery still beats none. But the failure has to survive to
+# the summary. A restore that reports success it did not achieve is worse than
+# one that fails loudly — you run this when the cluster is already on fire.
+#
+# `try` records the failure instead of aborting. `done_step` clears the active
+# marker only if every try in that function succeeded, so `status` keeps telling
+# the truth and re-running `restore` retries only what is still broken.
+STEP_RC=0
+try() { "$@" >/dev/null 2>&1 || STEP_RC=1; }
+done_step() {
+  if [ "$STEP_RC" -eq 0 ]; then unmark "$1"; fi
+  return "$STEP_RC"
+}
+
 # =============================================================================
 # INJECTIONS — one per layer of the platform
 # =============================================================================
@@ -51,9 +66,9 @@ inject_1() {
 }
 restore_1() {
   local p; p=$(saved 1-orig); p=${p:-/readyz}
-  kubectl patch deployment pulse-api -n "$NS" --type=json -p \
-    "[{\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/readinessProbe/httpGet/path\",\"value\":\"$p\"}]" >/dev/null 2>&1 || true
-  unmark 1
+  try kubectl patch deployment pulse-api -n "$NS" --type=json -p \
+    "[{\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/readinessProbe/httpGet/path\",\"value\":\"$p\"}]"
+  done_step 1
 }
 
 # --- 2: gateway stops admitting routes (module 05) ---------------------------
@@ -69,12 +84,12 @@ inject_2() {
   mark 2
 }
 restore_2() {
-  local gw; gw=$(saved 2-gw); [ -n "$gw" ] || { unmark 2; return; }
+  local gw; gw=$(saved 2-gw); [ -n "$gw" ] || { unmark 2; return 0; }
   local o; o=$(saved 2-orig); o=${o:-Same}
-  kubectl patch gateway "$gw" -n "$NS" --type=json -p \
+  try kubectl patch gateway "$gw" -n "$NS" --type=json -p \
     "[{\"op\":\"replace\",\"path\":\"/spec/listeners/0/allowedRoutes/namespaces/from\",\"value\":\"$o\"},
-      {\"op\":\"remove\",\"path\":\"/spec/listeners/0/allowedRoutes/namespaces/selector\"}]" >/dev/null 2>&1 || true
-  unmark 2
+      {\"op\":\"remove\",\"path\":\"/spec/listeners/0/allowedRoutes/namespaces/selector\"}]"
+  done_step 2
 }
 
 # --- 3: cardinality explosion (module 07) ------------------------------------
@@ -88,11 +103,11 @@ inject_3() {
 restore_3() {
   local o; o=$(saved 3-orig)
   if [ -n "$o" ]; then
-    kubectl set env deployment/pulse-worker -n "$NS" METRIC_LABEL_MODE="$o" >/dev/null 2>&1 || true
+    try kubectl set env deployment/pulse-worker -n "$NS" METRIC_LABEL_MODE="$o"
   else
-    kubectl set env deployment/pulse-worker -n "$NS" METRIC_LABEL_MODE- >/dev/null 2>&1 || true
+    try kubectl set env deployment/pulse-worker -n "$NS" METRIC_LABEL_MODE-
   fi
-  unmark 3
+  done_step 3
 }
 
 # --- 4: collector processors in the wrong order (module 08) ------------------
@@ -107,9 +122,11 @@ inject_4() {
   mark 4
 }
 restore_4() {
-  [ -f "$STATE_DIR/4-orig.yaml" ] && kubectl apply -f "$STATE_DIR/4-orig.yaml" >/dev/null 2>&1 || true
-  kubectl rollout restart daemonset/otel-collector -n "$MON_NS" >/dev/null 2>&1 || true
-  unmark 4
+  if [ -f "$STATE_DIR/4-orig.yaml" ]; then
+    try kubectl apply -f "$STATE_DIR/4-orig.yaml"
+  fi
+  try kubectl rollout restart daemonset/otel-collector -n "$MON_NS"
+  done_step 4
 }
 
 # --- 5: self-heal reverting a fix (module 10) --------------------------------
@@ -126,8 +143,8 @@ inject_5() {
 }
 restore_5() {
   local m; m=$(saved 5-mem); m=${m:-256Mi}
-  kubectl set resources deployment pulse-api -n "$NS" --limits=memory="$m" >/dev/null 2>&1 || true
-  unmark 5
+  try kubectl set resources deployment pulse-api -n "$NS" --limits=memory="$m"
+  done_step 5
 }
 
 # --- 6: canary analysis not scoped to the canary (module 11) -----------------
@@ -141,8 +158,10 @@ inject_6() {
   mark 6
 }
 restore_6() {
-  [ -f "$STATE_DIR/6-orig.yaml" ] && kubectl apply -f "$STATE_DIR/6-orig.yaml" >/dev/null 2>&1 || true
-  unmark 6
+  if [ -f "$STATE_DIR/6-orig.yaml" ]; then
+    try kubectl apply -f "$STATE_DIR/6-orig.yaml"
+  fi
+  done_step 6
 }
 
 # --- 7: admission policy silently permitting (module 12) ---------------------
@@ -157,9 +176,9 @@ inject_7() {
 }
 restore_7() {
   local o; o=$(saved 7-orig); o=${o:-Enforce}
-  kubectl patch clusterpolicy require-signed-images --type=merge -p \
-    "{\"spec\":{\"validationFailureAction\":\"$o\"}}" >/dev/null 2>&1 || true
-  unmark 7
+  try kubectl patch clusterpolicy require-signed-images --type=merge -p \
+    "{\"spec\":{\"validationFailureAction\":\"$o\"}}"
+  done_step 7
 }
 
 # --- 8: queue saturation (modules 07-08) -------------------------------------
@@ -172,9 +191,9 @@ inject_8() {
 }
 restore_8() {
   local c; c=$(saved 8-conc)
-  kubectl set env deployment/pulse-worker -n "$NS" \
-    WORKER_CONCURRENCY="${c:-4}" QUEUE_SIZE=64 SCHEDULE_INTERVAL_SECONDS=15 >/dev/null 2>&1 || true
-  unmark 8
+  try kubectl set env deployment/pulse-worker -n "$NS" \
+    WORKER_CONCURRENCY="${c:-4}" QUEUE_SIZE=64 SCHEDULE_INTERVAL_SECONDS=15
+  done_step 8
 }
 
 # --- 9: TCP accept queue too small (module 08b) ------------------------------
@@ -188,11 +207,11 @@ inject_9() {
 restore_9() {
   local o; o=$(saved 9-orig)
   if [ -n "$o" ]; then
-    kubectl set env deployment/pulse-api -n "$NS" LISTEN_BACKLOG="$o" >/dev/null 2>&1 || true
+    try kubectl set env deployment/pulse-api -n "$NS" LISTEN_BACKLOG="$o"
   else
-    kubectl set env deployment/pulse-api -n "$NS" LISTEN_BACKLOG- >/dev/null 2>&1 || true
+    try kubectl set env deployment/pulse-api -n "$NS" LISTEN_BACKLOG-
   fi
-  unmark 9
+  done_step 9
 }
 
 # --- 10: PDB that blocks all maintenance (module 06) -------------------------
@@ -213,8 +232,8 @@ EOF
   mark 10
 }
 restore_10() {
-  kubectl delete pdb pulse-api-gameday -n "$NS" --ignore-not-found >/dev/null 2>&1 || true
-  unmark 10
+  try kubectl delete pdb pulse-api-gameday -n "$NS" --ignore-not-found
+  done_step 10
 }
 
 readonly TOTAL=10
@@ -223,9 +242,14 @@ readonly TOTAL=10
 
 cmd_inject() {
   local count=${1:-1}
+
+  # Cheapest precondition first: a bad argument should not require a working
+  # cluster to be reported.
+  if [ "$count" -lt 1 ] || [ "$count" -gt "$TOTAL" ]; then
+    die "count must be 1-$TOTAL"
+  fi
   have kubectl || die "kubectl not found"
   kubectl get namespace "$NS" >/dev/null 2>&1 || die "namespace $NS not found"
-  [ "$count" -ge 1 ] && [ "$count" -le "$TOTAL" ] || die "count must be 1-$TOTAL"
 
   local picked=()
   while [ ${#picked[@]} -lt "$count" ]; do
@@ -264,13 +288,41 @@ cmd_status() {
 
 cmd_restore() {
   have kubectl || die "kubectl not found"
-  local n
-  for n in $(seq 1 $TOTAL); do "restore_$n" 2>/dev/null || true; done
-  rm -rf "${STATE_DIR:?}"/active-* 2>/dev/null || true
 
-  log "${GREEN}restored.${RESET} Waiting for rollout..."
-  kubectl rollout status deployment/pulse-api -n "$NS" --timeout=120s || true
-  kubectl rollout status deployment/pulse-worker -n "$NS" --timeout=120s || true
+  # Only touch what was actually injected. Blindly running all ten restores
+  # against a cluster that never saw them produces failures that mean nothing.
+  local n done_ok=() failed=()
+  for n in $(seq 1 "$TOTAL"); do
+    is_active "$n" || continue
+    STEP_RC=0
+    if "restore_$n"; then done_ok+=("$n"); else failed+=("$n"); fi
+  done
+
+  if [ ${#done_ok[@]} -eq 0 ] && [ ${#failed[@]} -eq 0 ]; then
+    log "${DIM}nothing was injected — nothing to restore${RESET}"
+    return 0
+  fi
+
+  if [ ${#failed[@]} -gt 0 ]; then
+    log "${RED}restore incomplete.${RESET} Still injected: ${failed[*]}"
+    [ ${#done_ok[@]} -eq 0 ] || log "${DIM}restored: ${done_ok[*]}${RESET}"
+    log ""
+    log "The cluster is NOT back to baseline. Their markers were kept, so:"
+    log "  ${DIM}$0 status${RESET}   shows what is still active"
+    log "  ${DIM}$0 restore${RESET}  retries only those"
+    log "Run the failing command by hand to see the error this swallowed."
+    return 1
+  fi
+
+  log "${GREEN}restored${RESET} injections: ${done_ok[*]}. Waiting for rollout..."
+  local rc=0
+  kubectl rollout status deployment/pulse-api -n "$NS" --timeout=120s || rc=1
+  kubectl rollout status deployment/pulse-worker -n "$NS" --timeout=120s || rc=1
+  if [ "$rc" -ne 0 ]; then
+    log "${RED}rollout did not converge.${RESET} The manifests are back, the pods are not."
+    return 1
+  fi
+
   log ""
   log "Verify with: ./platform/scripts/verify.sh"
 }

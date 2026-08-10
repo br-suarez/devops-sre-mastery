@@ -18,6 +18,7 @@ set -euo pipefail
 
 # --- pinned versions ----------------------------------------------------------
 # Keep in sync with the table in SETUP.md. Verified 2026-08-02.
+readonly GO_VERSION="1.26.5"
 readonly KIND_VERSION="v0.32.0"
 readonly KUBECTL_VERSION="v1.36.1"
 readonly HELM_VERSION="v4.2.3"
@@ -93,6 +94,25 @@ install_docker() {
     changed "docker engine"
     warn "log out and back into WSL, or run 'newgrp docker', before using docker"
   fi
+}
+
+install_go() {
+  if have go && go version 2>/dev/null | grep -q "go${GO_VERSION} "; then
+    present "go $GO_VERSION"
+    return
+  fi
+  local tmp
+  tmp=$(mktemp -d)
+  run curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-$(arch).tar.gz" -o "$tmp/go.tgz"
+  # Replacing the tree rather than extracting over it is what upstream
+  # documents: a leftover file from an older release can shadow a newer one.
+  run sudo rm -rf /usr/local/go
+  run sudo tar -C /usr/local -xzf "$tmp/go.tgz"
+  # Symlink into BIN_DIR instead of editing PATH — one less shell-specific
+  # thing to get wrong, and it keeps `sudo go` working too.
+  run sudo ln -sf /usr/local/go/bin/go /usr/local/go/bin/gofmt "$BIN_DIR/"
+  run rm -rf "$tmp"
+  changed "go $GO_VERSION"
 }
 
 install_kind() {
@@ -220,7 +240,7 @@ install_shell_helpers() {
 
 # --- main ---------------------------------------------------------------------
 
-ALL=(apt docker kind kubectl helm terraform trivy cosign shell_helpers)
+ALL=(apt docker go kind kubectl helm terraform trivy cosign shell_helpers)
 
 main() {
   local requested=()

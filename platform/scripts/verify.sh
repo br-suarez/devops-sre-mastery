@@ -34,7 +34,9 @@ check() {
   local out
   if out=$("$@" 2>&1); then
     ok "$desc"
-    [ -n "${VERBOSE:-}" ] && [ -n "$out" ] && log "        ${DIM}${out}${RESET}"
+    if [ -n "${VERBOSE:-}" ] && [ -n "$out" ]; then
+    log "        ${DIM}${out}${RESET}"
+    fi
   else
     bad "$desc" "$(printf '%s' "$out" | tail -3 | tr '\n' ' ')"
   fi
@@ -47,7 +49,7 @@ have() { command -v "$1" >/dev/null 2>&1; }
 group_tooling() {
   log "${DIM}== tooling ==${RESET}"
   local t
-  for t in docker kubectl kind helm shellcheck; do
+  for t in docker go kubectl kind helm shellcheck; do
     if have "$t"; then
       ok "$t is installed"
     else
@@ -56,6 +58,13 @@ group_tooling() {
   done
   if have docker; then
     check "docker daemon reachable without sudo" docker info
+  fi
+  local cgversion
+  cgversion=$(stat -fc %T /sys/fs/cgroup 2>/dev/null)
+  if [[ "$cgversion" == "cgroup2fs" ]]; then
+    ok "cgroup version 2 installed"
+  else
+    bad "cgroup v2 is not mounted" "found ${cgversion:-unknown} — run 'wsl --update', see SETUP.md"
   fi
 }
 
@@ -97,11 +106,35 @@ group_scripts() {
 group_nginx() {
   log "${DIM}== nginx edge ==${RESET}"
   if ! have curl; then skip "edge responds" "curl not installed"; return; fi
+
   local base=${PULSE_EDGE_URL:-https://localhost:8443}
+
+  # Split host:port. A URL with no explicit port has to fall back to the scheme
+  # default: otherwise `port` ends up holding the hostname, the probe below can
+  # never connect, and this group SKIPs forever without anyone noticing.
+  local host_port host port
+  host_port=$(echo "$base" | sed -E 's|https?://([^/]+).*|\1|')
+  case "$host_port" in
+    *:*) host="${host_port%:*}"; port="${host_port##*:}" ;;
+    *)   host="$host_port"
+         case "$base" in https://*) port=443 ;; *) port=80 ;; esac ;;
+  esac
+
+  # Nothing listening means the edge is not deployed yet — module 02 builds it.
+  # A harness that fails on things that do not exist yet gets ignored.
+  if ! timeout 2 bash -c "</dev/tcp/$host/$port" 2>/dev/null; then
+    skip "edge responds" "nothing listening on $host:$port — module 02 builds it"
+    return
+  fi
+
   check "edge serves the dashboard" curl -fsS -k -o /dev/null "$base/"
   check "edge proxies the API"      curl -fsS -k -o /dev/null "$base/api/checks"
+
+  # The redirect lives on the plain-HTTP listener, which is a different port.
+  # Swapping only the scheme would speak HTTP at the TLS port and get a 400.
+  local http_url=${PULSE_EDGE_HTTP_URL:-http://localhost:8080}
   check "edge redirects HTTP to HTTPS" \
-    bash -c "curl -fsS -o /dev/null -w '%{http_code}' '${base/https/http}' | grep -qE '^30[18]$'"
+    bash -c "curl -fsS -o /dev/null -w '%{http_code}' '$http_url' | grep -qE '^30[18]\$'"
 }
 
 # --- group: k8s ---------------------------------------------------------------

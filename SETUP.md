@@ -19,9 +19,15 @@ plus Argo CD plus the Pulse platform will not fit. It will not fail cleanly
 either — you will get evicted pods, OOMKilled Prometheus, and hours lost
 debugging an environment problem that is not a Kubernetes lesson.
 
+**Pre-requisites:**
+- WSL 2.5+ 
+- kernel 6.x 
+- cgroup v2
+
 **Check what you have:**
 
 ```bash
+stat -fc %T /sys/fs/cgroup
 free -h && nproc && cat /proc/meminfo | grep MemTotal
 ```
 
@@ -93,6 +99,7 @@ hypervisor driver.
 
 | Tool | Pinned version | Released | Notes |
 |---|---|---|---|
+| Go | `1.26.5` | 2026-08-05 | Pulse is written in Go; module 01 needs it |
 | kind | `v0.32.0` | 2026-06-02 | |
 | Kubernetes (node image) | `v1.36.1` | | kind v0.32.0 default |
 | kubectl | `v1.36.1` | | Match the cluster; skew of ±1 minor is supported |

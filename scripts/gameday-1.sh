@@ -22,7 +22,6 @@
 set -euo pipefail
 
 NS=${PULSE_NAMESPACE:-pulse}
-MON_NS=${MONITORING_NAMESPACE:-monitoring}
 STATE_DIR=${GAMEDAY_STATE:-/tmp/gameday-1}
 
 readonly RED=$'\033[31m' GREEN=$'\033[32m' DIM=$'\033[2m' RESET=$'\033[0m'
@@ -47,6 +46,21 @@ mark()   { touch "$STATE_DIR/active-$1"; }
 unmark() { rm -f "$STATE_DIR/active-$1"; }
 is_active() { [ -f "$STATE_DIR/active-$1" ]; }
 
+# Restore is best-effort per step: one failed command must not stop the others,
+# because a partial recovery still beats none. But the failure has to survive to
+# the summary. A restore that reports success it did not achieve is worse than
+# one that fails loudly — you run this when the cluster is already on fire.
+#
+# `try` records the failure instead of aborting. `done_step` clears the active
+# marker only if every try in that function succeeded, so `status` keeps telling
+# the truth and re-running `restore` retries only what is still broken.
+STEP_RC=0
+try() { "$@" >/dev/null 2>&1 || STEP_RC=1; }
+done_step() {
+  if [ "$STEP_RC" -eq 0 ]; then unmark "$1"; fi
+  return "$STEP_RC"
+}
+
 # =============================================================================
 # INJECTIONS
 #
@@ -67,11 +81,11 @@ inject_1() {
 }
 restore_1() {
   local p; p=$(saved 1-orig); p=${p:-/readyz}
-  kubectl patch deployment pulse-api -n "$NS" --type=json -p \
-    "[{\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/readinessProbe/httpGet/path\",\"value\":\"$p\"}]" >/dev/null 2>&1 || true
-  kubectl patch deployment pulse-api -n "$NS" --type=json -p \
-    '[{"op":"replace","path":"/spec/strategy/rollingUpdate/maxSurge","value":1}]' >/dev/null 2>&1 || true
-  unmark 1
+  try kubectl patch deployment pulse-api -n "$NS" --type=json -p \
+    "[{\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/readinessProbe/httpGet/path\",\"value\":\"$p\"}]"
+  try kubectl patch deployment pulse-api -n "$NS" --type=json -p \
+    '[{"op":"replace","path":"/spec/strategy/rollingUpdate/maxSurge","value":1}]'
+  done_step 1
 }
 
 # --- 2: Service selector no longer matches any pod ---------------------------
@@ -83,9 +97,9 @@ inject_2() {
   mark 2
 }
 restore_2() {
-  kubectl patch svc pulse-api -n "$NS" --type=merge -p \
-    '{"spec":{"selector":{"app":"pulse-api"}}}' >/dev/null 2>&1 || true
-  unmark 2
+  try kubectl patch svc pulse-api -n "$NS" --type=merge -p \
+    '{"spec":{"selector":{"app":"pulse-api"}}}'
+  done_step 2
 }
 
 # --- 3: gateway stops admitting routes from this namespace -------------------
@@ -104,12 +118,12 @@ inject_3() {
 }
 restore_3() {
   local gw; gw=$(saved 3-gw)
-  [ -n "$gw" ] || { unmark 3; return; }
+  [ -n "$gw" ] || { unmark 3; return 0; }
   local orig; orig=$(saved 3-orig); orig=${orig:-Same}
-  kubectl patch gateway "$gw" -n "$NS" --type=json -p \
+  try kubectl patch gateway "$gw" -n "$NS" --type=json -p \
     "[{\"op\":\"replace\",\"path\":\"/spec/listeners/0/allowedRoutes/namespaces/from\",\"value\":\"$orig\"},
-      {\"op\":\"remove\",\"path\":\"/spec/listeners/0/allowedRoutes/namespaces/selector\"}]" >/dev/null 2>&1 || true
-  unmark 3
+      {\"op\":\"remove\",\"path\":\"/spec/listeners/0/allowedRoutes/namespaces/selector\"}]"
+  done_step 3
 }
 
 # --- 4: memory limit below working set ---------------------------------------
@@ -123,8 +137,8 @@ inject_4() {
 }
 restore_4() {
   local m; m=$(saved 4-orig); m=${m:-256Mi}
-  kubectl set resources deployment pulse-worker -n "$NS" --limits=memory="$m" >/dev/null 2>&1 || true
-  unmark 4
+  try kubectl set resources deployment pulse-worker -n "$NS" --limits=memory="$m"
+  done_step 4
 }
 
 # --- 5: worker points at a hostname that does not resolve --------------------
@@ -138,8 +152,8 @@ inject_5() {
 }
 restore_5() {
   local u; u=$(saved 5-orig); u=${u:-http://pulse-api:8080}
-  kubectl set env deployment/pulse-worker -n "$NS" PULSE_API_URL="$u" >/dev/null 2>&1 || true
-  unmark 5
+  try kubectl set env deployment/pulse-worker -n "$NS" PULSE_API_URL="$u"
+  done_step 5
 }
 
 # --- 6: worker concurrency collapsed -----------------------------------------
@@ -155,9 +169,9 @@ inject_6() {
 }
 restore_6() {
   local c q; c=$(saved 6-conc); q=$(saved 6-queue)
-  kubectl set env deployment/pulse-worker -n "$NS" \
-    WORKER_CONCURRENCY="${c:-4}" QUEUE_SIZE="${q:-64}" SCHEDULE_INTERVAL_SECONDS=15 >/dev/null 2>&1 || true
-  unmark 6
+  try kubectl set env deployment/pulse-worker -n "$NS" \
+    WORKER_CONCURRENCY="${c:-4}" QUEUE_SIZE="${q:-64}" SCHEDULE_INTERVAL_SECONDS=15
+  done_step 6
 }
 
 readonly TOTAL=6
@@ -166,10 +180,14 @@ readonly TOTAL=6
 
 cmd_inject() {
   local count=${1:-1}
+
+  # Cheapest precondition first: a bad argument should not require a working
+  # cluster to be reported.
+  if [ "$count" -lt 1 ] || [ "$count" -gt "$TOTAL" ]; then
+    die "count must be 1-$TOTAL"
+  fi
   need kubectl
   kubectl get namespace "$NS" >/dev/null 2>&1 || die "namespace $NS not found"
-
-  [ "$count" -ge 1 ] && [ "$count" -le "$TOTAL" ] || die "count must be 1-$TOTAL"
 
   # Pick `count` distinct injections at random.
   local picked=()
@@ -207,15 +225,41 @@ cmd_status() {
 
 cmd_restore() {
   need kubectl
-  local n
-  for n in $(seq 1 $TOTAL); do
-    "restore_$n" 2>/dev/null || true
-  done
-  rm -rf "${STATE_DIR:?}"/active-* 2>/dev/null || true
 
-  log "${GREEN}restored.${RESET} Waiting for rollout..."
-  kubectl rollout status deployment/pulse-api -n "$NS" --timeout=90s || true
-  kubectl rollout status deployment/pulse-worker -n "$NS" --timeout=90s || true
+  # Only touch what was actually injected. Blindly running all six restores
+  # against a cluster that never saw them produces failures that mean nothing.
+  local n done_ok=() failed=()
+  for n in $(seq 1 "$TOTAL"); do
+    is_active "$n" || continue
+    STEP_RC=0
+    if "restore_$n"; then done_ok+=("$n"); else failed+=("$n"); fi
+  done
+
+  if [ ${#done_ok[@]} -eq 0 ] && [ ${#failed[@]} -eq 0 ]; then
+    log "${DIM}nothing was injected — nothing to restore${RESET}"
+    return 0
+  fi
+
+  if [ ${#failed[@]} -gt 0 ]; then
+    log "${RED}restore incomplete.${RESET} Still injected: ${failed[*]}"
+    [ ${#done_ok[@]} -eq 0 ] || log "${DIM}restored: ${done_ok[*]}${RESET}"
+    log ""
+    log "The cluster is NOT back to baseline. Their markers were kept, so:"
+    log "  ${DIM}$0 status${RESET}   shows what is still active"
+    log "  ${DIM}$0 restore${RESET}  retries only those"
+    log "Run the failing command by hand to see the error this swallowed."
+    return 1
+  fi
+
+  log "${GREEN}restored${RESET} injections: ${done_ok[*]}. Waiting for rollout..."
+  local rc=0
+  kubectl rollout status deployment/pulse-api -n "$NS" --timeout=90s || rc=1
+  kubectl rollout status deployment/pulse-worker -n "$NS" --timeout=90s || rc=1
+  if [ "$rc" -ne 0 ]; then
+    log "${RED}rollout did not converge.${RESET} The manifests are back, the pods are not."
+    return 1
+  fi
+
   log ""
   log "Verify with: ./platform/scripts/verify.sh"
 }
