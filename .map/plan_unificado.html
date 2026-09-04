@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unified Plan: DevOps/SRE Mastery + GCP ACE + AI Crypto</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card-bg: #161b22;
+    --border-color: #30363d;
+    --text-main: #c9d1d9;
+    --text-muted: #8b949e;
+    --accent-blue: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-amber: #d29922;
+    --accent-purple: #bc8cff;
+    --accent-red: #f85149;
+  }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--text-main);
+    margin: 0;
+    padding: 24px;
+    line-height: 1.5;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-size: 24px;
+    margin: 0 0 8px 0;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .kpi-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .kpi-card .val {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 4px;
+  }
+
+  .kpi-card .lbl {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .kpi-card.blue { border-top: 3px solid var(--accent-blue); }
+  .kpi-card.green { border-top: 3px solid var(--accent-green); }
+  .kpi-card.amber { border-top: 3px solid var(--accent-amber); }
+  .kpi-card.purple { border-top: 3px solid var(--accent-purple); }
+
+  .schedule-banner {
+    background: color-mix(in srgb, var(--accent-blue) 15%, transparent);
+    border: 1px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 32px;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .schedule-badge {
+    background: var(--accent-blue);
+    color: #000;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  h2 {
+    font-size: 18px;
+    color: #fff;
+    margin: 32px 0 16px 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+  }
+
+  /* Timeline Table */
+  .table-wrap {
+    overflow-x: auto;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 32px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+
+  th {
+    background: rgba(255,255,255,0.03);
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: top;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .tag-sre { background: rgba(88, 166, 255, 0.15); color: var(--accent-blue); border: 1px solid var(--accent-blue); }
+  .tag-ace { background: rgba(210, 153, 34, 0.15); color: var(--accent-amber); border: 1px solid var(--accent-amber); }
+  .tag-ai { background: rgba(188, 140, 255, 0.15); color: var(--accent-purple); border: 1px solid var(--accent-purple); }
+  .tag-fire { background: rgba(248, 81, 73, 0.15); color: var(--accent-red); border: 1px solid var(--accent-red); }
+  .tag-xmas { background: rgba(63, 185, 80, 0.15); color: var(--accent-green); border: 1px solid var(--accent-green); }
+
+  .status-done { color: var(--accent-green); font-weight: bold; }
+  .status-wip { color: var(--accent-amber); font-weight: bold; }
+  .status-todo { color: var(--text-muted); }
+
+  .highlight-row {
+    background: rgba(210, 153, 34, 0.08);
+  }
+
+  .highlight-xmas {
+    background: rgba(63, 185, 80, 0.05);
+  }
+
+  .highlight-corona {
+    background: rgba(188, 140, 255, 0.08);
+  }
+
+  footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1><span>📌</span> Unified Path: DevOps/SRE Mastery + GCP ACE + AI Crypto</h1>
+    <p class="subtitle">Complete execution roadmap synchronously balanced (Sep 8, 2026 → Mar 31, 2027)</p>
+  </header>
+
+  <div class="schedule-banner">
+    <div>
+      <b>Execution Cadence:</b> 4 Weekly Blocks (8 hrs/week)
+      <br>
+      <span style="color: var(--text-muted);">Tuesday, Wednesday, and Thursday (19:00 - 21:00) + Sunday (12:00 - 14:00) CST</span>
+    </div>
+    <div>
+      <span class="schedule-badge">TARGET END DATE: MARCH 31, 2027</span>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="lbl">Available Blocks</div>
+      <div class="val">110</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">27.5 weeks (excl. Christmas)</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="lbl">Net Content</div>
+      <div class="val">87 Blocks</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Modules 01-16 + 17 AI + ACE Mocks</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="lbl">Reserve Buffer</div>
+      <div class="val">23 Blocks</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">~6 weeks safety margin</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="lbl">GCP ACE Exam</div>
+      <div class="val">DEC 13, 2026</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Post Module 14 (GCP Hands-on)</div>
+    </div>
+  </div>
+
+  <h2>🗺️ Weekly Execution Map by Phase</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Phase</th>
+          <th>Date Range</th>
+          <th>Modules / Milestones</th>
+          <th>Blocks</th>
+          <th>Focus and Key Deliverable</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Phase 1</b></td>
+          <td>Sep 8 – Sep 27, 2026</td>
+          <td>
+            <span class="tag tag-sre">SRE 01</span>
+            <span class="tag tag-sre">SRE 02</span>
+            <span class="tag tag-sre">SRE 03</span>
+            <span class="tag tag-sre">SRE 04</span>
+          </td>
+          <td>14</td>
+          <td><b>Fundamentals & Containers:</b> Robust scripting, NGINX TLS, distroless Compose stack, K8s Core on <code>kind</code>. <code>verify.sh</code> harness ready.</td>
+        </tr>
+        <tr>
+          <td><b>Phase 2</b></td>
+          <td>Sep 29 – Oct 18, 2026</td>
+          <td>
+            <span class="tag tag-sre">SRE 05</span>
+            <span class="tag tag-sre">SRE 06</span>
+          </td>
+          <td>10</td>
+          <td><b>Advanced Networking & Storage:</b> Gateway API replaces NGINX. Postgres StatefulSets, PDBs, and DB restore drill.</td>
+        </tr>
+        <tr>
+          <td><b>Phase 3</b></td>
+          <td>Oct 20 – Nov 8, 2026</td>
+          <td>
+            <span class="tag tag-sre">SRE 07</span>
+            <span class="tag tag-sre">SRE 08</span>
+            <span class="tag tag-sre">SRE 08b</span>
+            <span class="tag tag-fire">08c Game Day I</span>
+          </td>
+          <td>16</td>
+          <td><b>Deep Observability & Incident I:</b> Prometheus RED SLIs, OpenTelemetry SDK, eBPF profiling + First Real Incident & Postmortem.</td>
+        </tr>
+        <tr class="highlight-row">
+          <td><b>Phase 4</b></td>
+          <td>Nov 10 – Dec 6, 2026</td>
+          <td>
+            <span class="tag tag-sre">SRE 09</span>
+            <span class="tag tag-sre">SRE 10</span>
+            <span class="tag tag-sre">SRE 12</span>
+            <span class="tag tag-ace">SRE 14 GCP</span>
+          </td>
+          <td>21</td>
+          <td><b>Delivery, Supply Chain & GCP Hands-on:</b> GitHub Actions, Argo CD, Cosign/Kyverno + <b>Pulse deployed on GKE with Workload Identity</b>. Direct practice for ACE.</td>
+        </tr>
+        <tr class="highlight-row">
+          <td><b>🎯 ACE Milestone</b></td>
+          <td>Sun Nov 29 & Dec 6</td>
+          <td>
+            <span class="tag tag-ace">ACE Mocks</span>
+          </td>
+          <td>2</td>
+          <td><b>Exam Simulations:</b> 2 Mock exams on CloudSkillsBoost (target score: >90%). Intensive review of IAM/Quotas/Billing.</td>
+        </tr>
+        <tr class="highlight-row" style="background: rgba(210, 153, 34, 0.18);">
+          <td><b>🏆 EXAM</b></td>
+          <td><b>Sunday Dec 13, 2026</b></td>
+          <td>
+            <span class="tag tag-ace" style="font-size:12px; padding:4px 10px;">GCP ACE EXAM</span>
+          </td>
+          <td>—</td>
+          <td><b>Taking and Passing the Official Google Associate Cloud Engineer Certification Exam.</b></td>
+        </tr>
+        <tr class="highlight-xmas">
+          <td><b>🎄 Christmas</b></td>
+          <td>Dec 21 – Jan 3, 2027</td>
+          <td>
+            <span class="tag tag-xmas">CHRISTMAS BREAK</span>
+          </td>
+          <td>0</td>
+          <td><b>Christmas Break & Consolidation:</b> Zero scheduled sessions. Energy recovery and calendar cushion.</td>
+        </tr>
+        <tr>
+          <td><b>Phase 5</b></td>
+          <td>Jan 5 – Jan 31, 2027</td>
+          <td>
+            <span class="tag tag-sre">SRE 11</span>
+            <span class="tag tag-sre">SRE 13</span>
+          </td>
+          <td>9</td>
+          <td><b>Progressive Delivery & IaC:</b> Argo Rollouts Canary guided by SLO + Clean Terraform infrastructure modules.</td>
+        </tr>
+        <tr>
+          <td><b>Phase 6</b></td>
+          <td>Feb 2 – Feb 21, 2027</td>
+          <td>
+            <span class="tag tag-sre">SRE 15</span>
+            <span class="tag tag-fire">16 Game Day II</span>
+          </td>
+          <td>8</td>
+          <td><b>Legacy Workers & SRE Wrap-up:</b> Ansible playbooks for legacy worker + Jenkinsfile + Game Day II final architecture defense postmortem.</td>
+        </tr>
+        <tr class="highlight-corona">
+          <td><b>Phase 7</b></td>
+          <td>Feb 23 – Mar 15, 2027</td>
+          <td>
+            <span class="tag tag-ai">SRE 17 AI Crypto</span>
+          </td>
+          <td>5</td>
+          <td><b>Promotion Crown (Cloak/Fortress Analog):</b> Autonomous cryptographic key rotation (GCP KMS + Cloud Functions + AI Agents).</td>
+        </tr>
+        <tr>
+          <td><b>Phase 8</b></td>
+          <td>Mar 17 – Mar 31, 2027</td>
+          <td>
+            <span class="tag tag-sre">Wrap-up & Resume</span>
+          </td>
+          <td>4</td>
+          <td><b>Final Polish & Portfolio:</b> Repository READMEs in English, performance metrics, and preparation for Senior SRE interviews ($4k+).</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>📋 Complete Module-by-Module Breakdown</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Module / Name</th>
+          <th>Status</th>
+          <th>Blocks</th>
+          <th>Deliverable / Main Artifact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>00</b></td>
+          <td>Bootstrap & Environment</td>
+          <td><span class="status-done">✅ Closed</span></td>
+          <td>2</td>
+          <td>Validation script <code>bootstrap.sh</code> and reproducible environment.</td>
+        </tr>
+        <tr>
+          <td><b>01</b></td>
+          <td>Linux & Scripting</td>
+          <td><span class="status-wip">🔵 In Progress</span></td>
+          <td>4 (2 rest)</td>
+          <td><code>verify.sh</code> harness and silent-failure-free Bash checks.</td>
+        </tr>
+        <tr>
+          <td><b>02</b></td>
+          <td>NGINX as Edge</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>4</td>
+          <td>Pulse behind NGINX Proxy with configured TLS.</td>
+        </tr>
+        <tr>
+          <td><b>03</b></td>
+          <td>Docker & Supply Chain</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>4</td>
+          <td>Optimized distroless images and local Compose stack.</td>
+        </tr>
+        <tr>
+          <td><b>04</b></td>
+          <td>Kubernetes Core</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>4</td>
+          <td>Pulse running on local <code>kind</code> cluster with HPA and QoS.</td>
+        </tr>
+        <tr>
+          <td><b>05</b></td>
+          <td>Gateway API</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>5</td>
+          <td><code>HTTPRoute</code> and migration documented in <code>MIGRATION.md</code>.</td>
+        </tr>
+        <tr>
+          <td><b>06</b></td>
+          <td>Kubernetes Advanced</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>5</td>
+          <td>Postgres StatefulSet + restore simulation script.</td>
+        </tr>
+        <tr>
+          <td><b>07</b></td>
+          <td>Prometheus & Grafana</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>4</td>
+          <td>RED dashboards and SLO-based alert rules.</td>
+        </tr>
+        <tr>
+          <td><b>08</b></td>
+          <td>OpenTelemetry</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>6</td>
+          <td>Integrated OTel SDK + metric-to-trace exemplars.</td>
+        </tr>
+        <tr>
+          <td><b>08b</b></td>
+          <td>eBPF & Profiling</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>4</td>
+          <td>Continuous profiling without application code modifications.</td>
+        </tr>
+        <tr style="background: rgba(248, 81, 73, 0.05);">
+          <td><b>08c</b></td>
+          <td>Game Day I</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>2</td>
+          <td>Postmortem I and harness check remediation.</td>
+        </tr>
+        <tr>
+          <td><b>09</b></td>
+          <td>GitHub Actions</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>4</td>
+          <td>Green CI/CD pipeline publishing by digest with SBOM.</td>
+        </tr>
+        <tr>
+          <td><b>10</b></td>
+          <td>GitOps with Argo CD</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>5</td>
+          <td>App-of-apps governing the local cluster.</td>
+        </tr>
+        <tr>
+          <td><b>11</b></td>
+          <td>Progressive Delivery</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>4</td>
+          <td>Argo Rollouts Canary with SLO-guided rollback.</td>
+        </tr>
+        <tr>
+          <td><b>12</b></td>
+          <td>DevSecOps</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>5</td>
+          <td>Image signing with Cosign and Kyverno admission control.</td>
+        </tr>
+        <tr>
+          <td><b>13</b></td>
+          <td>Terraform</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>5</td>
+          <td>Infrastructure declared in reusable Terraform modules.</td>
+        </tr>
+        <tr class="highlight-row">
+          <td><b>14</b></td>
+          <td>Google Cloud (GKE)</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>7</td>
+          <td><b>Pulse on GKE with Workload Identity + Clean Teardown (Pre-ACE).</b></td>
+        </tr>
+        <tr class="highlight-row">
+          <td><b>ACE</b></td>
+          <td>ACE Mocks & Review</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>2</td>
+          <td>CloudSkillsBoost mocks with target score > 90%.</td>
+        </tr>
+        <tr>
+          <td><b>15</b></td>
+          <td>Jenkins & Ansible</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>3</td>
+          <td>Ansible playbooks for legacy worker + Jenkinsfile.</td>
+        </tr>
+        <tr style="background: rgba(248, 81, 73, 0.05);">
+          <td><b>16</b></td>
+          <td>Game Day II & Arch Review</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>5</td>
+          <td>Complete Postmortem II & architecture trade-offs defense.</td>
+        </tr>
+        <tr class="highlight-corona">
+          <td><b>17</b></td>
+          <td>AI Crypto Key Rotation</td>
+          <td><span class="status-todo">⬜ Pending</span></td>
+          <td>5</td>
+          <td><b>Key rotation AI agent for Cloak/Fortress (Pulse analog).</b></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    Generated by Antigravity / Hermes Agent • Repository: <code>~/Projects/devops-sre-mastery</code>
+  </footer>
+</div>
+
+</body>
+</html>
