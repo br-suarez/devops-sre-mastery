@@ -5,14 +5,13 @@
 
 ## Fecha de inicio
 
-
 ## Resultado del diagnóstico
 
 - [ ] Aprobado → ruta rápida (avanzado + capstone + break-fix)
-- [ ] No aprobado → módulo completo desde fundamentos
+- [*] No aprobado → módulo completo desde fundamentos
 
 Qué falló y por qué:
-
+Decidí hacer todos los laboratorios en su totalidad con el fin de estudiar y repasar
 
 ## Comandos que tuve que buscar
 
@@ -57,4 +56,6 @@ Cuándo elegiría otra cosa:
 | Lo defiendo en entrevista senior | |
 
 ## Pendiente / dudas para el repaso a 30 días
-
+1. Robustez en Bash: ¿Por qué set -e por sí solo NO es suficiente para garantizar que un script de Bash se detenga ante cualquier error? Decime al menos un caso donde set -e falla en silencio.
+    Dentro de un if/||/&&: if comando_que_falla; then ... → set -e NO aborta porque el comando está dentro de una condición.
+    En un pipeline sin pipefail: comando_que_falla | grep algo → solo se evalúa el exit code del último comando del pipe (grep). Si grep encuentra algo y sale con 0, el fallo del primer comando se pierde. Por eso se necesita set -o pipefail.

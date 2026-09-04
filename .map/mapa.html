@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8">
+<style>
+  .wrap{max-width:900px}
+  h3{margin:18px 0 8px;font-size:15px;letter-spacing:.02em}
+  .lane{display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:center;margin:4px 0}
+  .lbl{font-size:12px;color:var(--muted-foreground);text-align:right}
+  .bar{height:22px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:11px;white-space:nowrap;overflow:hidden;border:1px solid var(--border)}
+  .sre{background:color-mix(in srgb,var(--accent) 35%,transparent)}
+  .ace{background:color-mix(in srgb,#f59e0b 30%,transparent)}
+  .gap{background:repeating-linear-gradient(45deg,transparent,transparent 5px,color-mix(in srgb,#ef4444 30%,transparent) 5px,color-mix(in srgb,#ef4444 30%,transparent) 10px)}
+  .real{background:color-mix(in srgb,#22c55e 30%,transparent)}
+  .row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+  .chip{font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:99px}
+  .done{background:color-mix(in srgb,#22c55e 25%,transparent)}
+  .wip{background:color-mix(in srgb,#f59e0b 25%,transparent)}
+  .todo{opacity:.55}
+  .ghost{background:repeating-linear-gradient(45deg,transparent,transparent 4px,color-mix(in srgb,#ef4444 25%,transparent) 4px,color-mix(in srgb,#ef4444 25%,transparent) 8px)}
+  .note{font-size:12px;color:var(--muted-foreground);margin:6px 0 0}
+</style></head>
+<body><div class="wrap">
+
+<h3>1 · Los 19 módulos del track (estado REAL en el repo)</h3>
+<div class="row">
+  <span class="chip done">00 Bootstrap ✓</span>
+  <span class="chip wip">01 Linux/Scripting ⟳</span>
+  <span class="chip todo">02 NGINX</span>
+  <span class="chip todo">03 Docker</span>
+  <span class="chip todo">04 K8s Core</span>
+  <span class="chip todo">05 Gateway API</span>
+  <span class="chip todo">06 K8s Advanced</span>
+  <span class="chip ghost">07 Prometheus ✕cal</span>
+  <span class="chip ghost">08 OTel ✕cal</span>
+  <span class="chip ghost">08b eBPF ✕cal</span>
+  <span class="chip todo">08c Game Day I</span>
+  <span class="chip todo">09 Actions</span>
+  <span class="chip todo">10 Argo CD</span>
+  <span class="chip todo">11 Canary</span>
+  <span class="chip todo">12 DevSecOps</span>
+  <span class="chip todo">13 Terraform</span>
+  <span class="chip todo">14 GCP/GKE</span>
+  <span class="chip todo">15 Jenkins/Ansible</span>
+  <span class="chip todo">16 Game Day II</span>
+</div>
+<p class="note">✕cal = el módulo existe en <code>modules/</code> pero NO tiene ni un bloque en el Calendar.</p>
+
+<h3>2 · Tres líneas de tiempo que no coinciden</h3>
+<div class="lane"><div class="lbl">PLAN.md dice</div><div class="bar sre">ago 11 → mar 2 · 72 bloques · hoy tocaría módulo 05</div></div>
+<div class="lane"><div class="lbl">Calendar dice</div><div class="bar sre">hoy: 05 Gateway API (bloque 2 de 5)</div></div>
+<div class="lane"><div class="lbl">Repo dice</div><div class="bar real">hoy: 01 Linux &amp; Scripting, diagnóstico no aprobado, sin cerrar</div></div>
+<p class="note">Desfase real ≈ <b>4 módulos / 4 semanas</b>. TRACKER.md está 100 % en ⬜.</p>
+
+<h3>3 · El choque oct–nov: el hueco de observabilidad</h3>
+<div class="lane"><div class="lbl">1 oct</div><div class="bar sre">SRE · 06 K8s Advanced (último bloque SRE)</div></div>
+<div class="lane"><div class="lbl">4 oct → 8 nov</div><div class="bar ace">GCP ACE · 6 semanas, domingos 09:00–09:30</div></div>
+<div class="lane"><div class="lbl">5 oct → 16 nov</div><div class="bar gap">SRE en blanco — módulos 07 + 08 + 08b (14 bloques) borrados del calendario</div></div>
+<div class="lane"><div class="lbl">15 nov</div><div class="bar ace">EXAMEN ACE</div></div>
+<div class="lane"><div class="lbl">17 nov</div><div class="bar sre">🔥 Game Day I — contra una plataforma SIN métricas ni trazas</div></div>
+
+<h3>4 · Lo que existe solo en el work-notebook (no en el repo)</h3>
+<div class="row">
+  <span class="chip ghost">MISSION.md</span>
+  <span class="chip ghost">Módulo 17 · rotación de llaves con IA</span>
+  <span class="chip ghost">verify.sh "rotation"</span>
+  <span class="chip ghost">lab KMS en módulo 06</span>
+  <span class="chip ghost">Gen AI Leader</span>
+</div>
+<p class="note">Pivote del 27-ago-2026 documentado en <code>~/work-notebook/README.md</code> — nunca aterrizó en el repo ni en el Calendar.</p>
+
+</div></body></html>
