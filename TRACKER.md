@@ -12,7 +12,7 @@ tres semanas después no sirve para nada.
 | # | Módulo | Estado | Diagnóstico | Inicio | Cierre | Bloques (est/real) | Nivel |
 |---|---|---|---|---|---|---|---|
 | 00 | Bootstrap & Environment | ✅ | — | 2026-08-07 | 2026-08-07 | 2 / 2 | 4 |
-| 01 | Linux & Scripting | ✅ | ❌ | 2026-08-11 | 2026-09-04 | 4 / 4 | 4 |
+| 01 | Linux & Scripting | 🔵 | ❌ | 2026-08-11 | | 4 / | |
 | 02 | NGINX as Edge | 🔵 | ⬜ | 2026-09-06 | | 4 / | |
 | 03 | Docker & Supply Chain | ⬜ | ⬜ | | | 4 / | |
 | 04 | Kubernetes Core | ⬜ | ⬜ | | | 4 / | |
