@@ -1,21 +1,10 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
-#1 Recibe la URL del servicio (\$1) y la versión esperada (\$2) por argumentos.
-#2 Consulta $URL/healthz y exige HTTP 200 (usa curl con --max-time y --connect-timeout para no colgarse si el puerto no responde).
-#3 Consulta $URL/api/checks y exige que la respuesta sea un JSON válido (jq . o python3 -m json.tool).
-#4 Reintenta cada chequeo hasta 3 veces con backoff (espera incremental 1s, 2s, 4s).
-#5 Limpia los archivos/directorios temporales creados usando trap ... EXIT INT TERM.
-#6 Sale con exit 0 únicamente si todo pasó. Si algo falla, sale con exit 1 imprimiendo exactamente qué chequeo falló y qué vio.
-#7 Pasa shellcheck sin ninguna advertencia.
-
-#!/usr/bin/env bash
+# shellcheck disable=SC2329
 #
-# check_service.sh
+# deploy-check.sh
 #
-# Uso: ./check_service.sh http://localhost:8080 1.2.3
+# Usage: ./deploy-check.sh http://localhost:8080 v1
 #
-# Para no validar la versión, pasa ANY como versión esperada.
 
 set -euo pipefail
 

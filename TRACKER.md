@@ -11,9 +11,9 @@ tres semanas después no sirve para nada.
 
 | # | Módulo | Estado | Diagnóstico | Inicio | Cierre | Bloques (est/real) | Nivel |
 |---|---|---|---|---|---|---|---|
-| 00 | Bootstrap & Environment | ⬜ | — | | | 2 / | |
-| 01 | Linux & Scripting | ⬜ | ⬜ | | | 4 / | |
-| 02 | NGINX as Edge | ⬜ | ⬜ | | | 4 / | |
+| 00 | Bootstrap & Environment | ✅ | — | 2026-08-07 | 2026-08-07 | 2 / 2 | 4 |
+| 01 | Linux & Scripting | ✅ | ❌ | 2026-08-11 | 2026-09-04 | 4 / 4 | 4 |
+| 02 | NGINX as Edge | 🔵 | ⬜ | 2026-09-06 | | 4 / | |
 | 03 | Docker & Supply Chain | ⬜ | ⬜ | | | 4 / | |
 | 04 | Kubernetes Core | ⬜ | ⬜ | | | 4 / | |
 | 05 | Gateway API | ⬜ | ⬜ | | | 5 / | |
@@ -114,7 +114,7 @@ módulo no está cerrado.
 
 | Módulo | Capa añadida | ¿Despliega? | Comando de verificación |
 |---|---|---|---|
-| 01 | Harness `verify.sh` | ⬜ | `make verify` |
+| 01 | Harness `verify.sh` | ✅ | `./platform/scripts/verify.sh tooling build scripts` |
 | 02 | Edge NGINX + TLS | ⬜ | `./platform/scripts/verify.sh nginx` |
 | 03 | Compose, distroless | ⬜ | `docker compose up -d && make verify` |
 | 04 | Kubernetes (kind) | ⬜ | `kubectl get pods -n pulse` |
