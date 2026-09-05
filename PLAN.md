@@ -1,8 +1,9 @@
 # PLAN — Calendario semana por semana
 
-**Inicio:** martes 2026-08-11  (primera sesión)
-**Objetivo:** martes 2027-03-02
-**Ritmo:** 3 bloques de 120 min — **martes, miércoles y jueves, 19:00–21:00** = 6 h/semana
+**Inicio:** lunes 2026-09-07  (reinicio unificado)
+**Objetivo:** miércoles 2027-03-31
+**Ritmo:** 4 bloques de 120 min — **lunes, martes, miércoles y jueves, 19:00–21:00 CST** = 8 h/semana
+**Examen GCP ACE:** domingo 2026-12-13
 
 ---
 
