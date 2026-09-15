@@ -136,33 +136,23 @@ the language you think in.
 
 ## Prior work (`archive/`)
 
-Completed before this track began, preserved with its original documentation.
+Real, reproduced reliability work solved **before** this track began — the
+proof of doing, not following. Highlights, each with reproduced evidence
+(`evidence/` and a `run-lab.sh`) in the archive:
 
-### KubeLabs modules 01–12
+- **Multi-window burn-rate alerting** — 35% error rate injected, paged at 14.4x.
+- **Canary auto-rejection** — a bad release rejected at 20% traffic; found a 3x
+  blast-radius bug from a too-short analysis pause.
+- **Toil automation** — alert webhook runs the runbook unattended: 11 manual
+  commands → 0, diagnosis on disk 13s after the page.
+- **Image slimming** — 1.66 GB → 235 MB, rebuilds 6s → 2s.
+- **CI/CD deploy gate** — blocked a release that looked healthy
+  (`READY=true, RESTARTS=0`) but was failing 19.2% of requests.
+- **Linux performance debugging** — syscall storm (200k `write` calls), a hang
+  read from `/proc/pid/wchan`, and a CPU-bound case where `strace` finding
+  *nothing* was the diagnosis.
 
-Cluster fundamentals built against a real Kind cluster: Pods, ReplicaSets,
-Deployments, DaemonSets, namespaces, quotas, ConfigMaps and Secrets, Services
-and CoreDNS resolution. → [`archive/`](./archive/)
-
-### SRE track 20–31
-
-Reliability engineering rather than cluster administration.
-
-| # | Module | What it proved |
-|---|---|---|
-| 20 | [SLIs, SLOs & Error Budgets](./archive/sre-track/20-slo-error-budgets/README.md) | Multi-window burn-rate alerting proven end to end: 35% error rate injected, paged at 14.4x, short window resolved while the long window was still over threshold |
-| 21 | [Safe Deployments with Argo CD](./archive/sre-track/21-argocd-canary/README.md) | Canary gated on the module 20 SLI; a bad release auto-rejected at 20% traffic. Found a 3x blast-radius bug caused by a pause shorter than the analysis time-to-verdict |
-| 22 | [Toil Automation & Runbooks](./archive/sre-track/22-toil-automation/README.md) | Alertmanager webhook runs the runbook unattended: 11 manual commands → 0, full diagnosis on disk 13s after the page |
-| 23 | [Observability as Code](./archive/sre-track/23-terraform-datadog/README.md) | 2 SLOs, 4 burn-rate monitors and a dashboard as code, validated offline with policy assertions on the plan JSON *(plan only — no account)* |
-| 24 | [Kubernetes Failure Injection](./archive/sre-track/24-k8s-failure-injection/README.md) | CrashLoopBackOff, Service with no endpoints, Service *with* endpoints that still fails, pending PVC — each diagnosed from symptoms |
-| 25 | [Docker Multi-stage & Debugging](./archive/sre-track/25-docker-multistage/README.md) | 1.66 GB → 235 MB, 6s → 2s rebuilds; two containers that build clean and die on start |
-| 26 | [Helm Package & Rollback](./archive/sre-track/26-helm-chart-rollback/README.md) | Caught `helm upgrade` reporting "deployed" for a release whose pods never started |
-| 27 | [Terraform Import & Drift](./archive/sre-track/27-terraform-import-drift/README.md) | `plan` vs `plan -refresh-only` on the same field, pointing opposite directions |
-| 28 | [Ansible Idempotency](./archive/sre-track/28-ansible-idempotency/README.md) | `changed=4` forever vs `changed=0`; caught Ansible silently ignoring a config on a world-writable mount |
-| 29 | [PromQL & Alerting](./archive/sre-track/29-promql-alerting/README.md) | RED and saturation queries; latency alert driven 198ms → 950ms and back, pending→firing measured at 2m06s |
-| 30 | [CI/CD Safe Deploy Gate](./archive/sre-track/30-cicd-deploy-gate/README.md) | Gate blocked a release with `READY=true, RESTARTS=0` that was failing 19.2% of requests |
-| 31 | [Linux Performance Debugging](./archive/sre-track/31-linux-performance/README.md) | Syscall storm (200k `write` calls → 8x faster), a hang read from `/proc/pid/wchan`, and a CPU-bound case where strace finding *nothing* was the diagnosis |
-
-Each archived module ships an `evidence/` directory with real command output and
-a `run-lab.sh` that reproduces it. Where something could not be executed, the
-README says so explicitly rather than implying otherwise.
+Full catalogue: **12 cluster fundamentals (KubeLabs)** + **12 reliability
+engineering modules** → [`archive/`](./archive/), each with real command output
+and a reproduction script. Where something could not be executed, the README
+says so explicitly rather than implying otherwise.
