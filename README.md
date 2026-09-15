@@ -57,6 +57,7 @@ through canary deployments gated on its own SLO.
 | 14 | Same Terraform targets GKE, with a teardown drill |
 | 15 | Ansible-provisioned legacy worker + equivalent Jenkinsfile |
 | 16 | Game Day: injected failures, incident timeline, postmortem |
+| 17 | AI-driven autonomous cryptographic key rotation (GCP KMS + Cloud Functions + AI agents) |
 
 ---
 
@@ -64,9 +65,9 @@ through canary deployments gated on its own SLO.
 
 | # | Module | Blocks | Status |
 |---|---|---|---|
-| 00 | [Bootstrap & Environment](./modules/00-bootstrap/README.md) | 2 | ⬜ |
-| 01 | [Linux & Scripting](./modules/01-linux-scripting/README.md) | 4 | ⬜ |
-| 02 | [NGINX as Edge](./modules/02-nginx-edge/README.md) | 4 | ⬜ |
+| 00 | [Bootstrap & Environment](./modules/00-bootstrap/README.md) | 2 | ✅ |
+| 01 | [Linux & Scripting](./modules/01-linux-scripting/README.md) | 4 | 🔵 |
+| 02 | [NGINX as Edge](./modules/02-nginx-edge/README.md) | 4 | 🔵 |
 | 03 | [Docker & Image Supply Chain](./modules/03-docker-supply-chain/README.md) | 4 | ⬜ |
 | 04 | [Kubernetes Core](./modules/04-kubernetes-core/README.md) | 4 | ⬜ |
 | 05 | [Gateway API](./modules/05-gateway-api/README.md) | 5 | ⬜ |
@@ -83,8 +84,11 @@ through canary deployments gated on its own SLO.
 | 14 | [Google Cloud](./modules/14-gcp/README.md) | 7 | ⬜ |
 | 15 | [Jenkins & Ansible: Operate and Migrate](./modules/15-jenkins-ansible/README.md) | 3 | ⬜ |
 | 16 | [Game Day II & Hardening](./modules/16-game-day/README.md) | 5 | ⬜ |
+| 17 | [**AI Crypto Key Rotation**](./modules/17-ai-key-rotation/README.md) | 5 | ⬜ |
 
-**82 blocks of 120 minutes ≈ 164 hours, over 28 weeks.** See [PLAN.md](./PLAN.md) for the
+**Status legend:** ⬜ pending · 🔵 in progress · ✅ closed — mirrors [TRACKER.md](./TRACKER.md).
+
+**87 blocks of 120 minutes ≈ 174 hours, over 28 weeks.** See [PLAN.md](./PLAN.md) for the
 week-by-week calendar and [TRACKER.md](./TRACKER.md) for progress.
 
 ### What "done" means
