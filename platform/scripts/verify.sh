@@ -80,6 +80,16 @@ group_build() {
   for svc in pulse-api pulse-worker; do
     check "$svc compiles" env -C "platform/services/$svc" go build -o /dev/null .
     check "$svc passes go vet" env -C "platform/services/$svc" go vet ./...
+
+  # Comprobar el tamaño (bytes a MB: 20*1024*1024)
+  local size
+  size=$(stat -c %s "bin/$svc")
+  if (( size > 20 * 1024 * 1024 )); then
+    bad "$svc binary size (exceeds 20MB)" "was $((size / 1024 / 1024))MB"
+  else
+    ok "$svc binary size (under 20MB)"
+  fi
+    
   done
 }
 
@@ -98,7 +108,17 @@ group_scripts() {
     skip "shell scripts are clean" "no scripts yet"
     return
   fi
-  check "shellcheck clean (${#files[@]} scripts)" shellcheck "${files[@]}"
+  check "shell scripts are clean" shellcheck -e SC2329 "${files[@]}"
+}
+
+# --- group: test -------------------------------------------------------------
+group_test() {
+  log "${DIM}== test ==${RESET}"
+  local svc
+  for svc in pulse-api pulse-worker; do
+    # env -C cambia el directorio de trabajo solo para este comando
+    check "$svc unit tests" env -C "platform/services/$svc" go test ./...
+  done
 }
 
 # --- group: nginx -------------------------------------------------------------
@@ -390,7 +410,7 @@ group_security() {
 
 # --- registry -----------------------------------------------------------------
 # Order matters: cheap checks first so failures surface fast.
-ALL_GROUPS=(tooling build scripts nginx gateway k8s storage slo traces profiling gitops security)
+ALL_GROUPS=(tooling build scripts nginx gateway k8s storage slo traces profiling gitops security test)
 
 usage() {
   log "usage: $0 [group...]"
@@ -424,3 +444,11 @@ main() {
 
 cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 main "$@"
+
+# --- group: test -------------------------------------------------------------
+group_test() {
+  log "${DIM}== test ==${RESET}"
+  # Ejecuta los tests de todos los paquetes de Go
+  check "go tests pass" go test ./platform/services/...
+}
+

@@ -188,18 +188,24 @@ func env(key, def string) string {
 	return def
 }
 
-func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
+// app bundles the service dependencies so handlers can be tested
+// without opening a real port or starting the server loop.
+type app struct {
+	store *store
+	mx    *metrics
 
-	st := newStore()
-	mx := newMetrics()
+	ready   bool // flips true once start-up work completes (module 04)
+	readyMu sync.RWMutex
+}
 
-	// ready flips only once startup work is done. Module 04 wires it to a
-	// readinessProbe, and module 11 relies on it to gate canary promotion.
-	var ready bool
-	var readyMu sync.RWMutex
+func newApp() *app {
+	return &app{
+		store: newStore(),
+		mx:    newMetrics(),
+	}
+}
 
+func (a *app) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -207,9 +213,9 @@ func main() {
 	})
 
 	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
-		readyMu.RLock()
-		defer readyMu.RUnlock()
-		if !ready {
+		a.readyMu.RLock()
+		defer a.readyMu.RUnlock()
+		if !a.ready {
 			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "starting"})
 			return
 		}
@@ -218,13 +224,13 @@ func main() {
 
 	mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
-		fmt.Fprint(w, mx.render())
+		fmt.Fprint(w, a.mx.render())
 	})
 
-	mux.HandleFunc("/api/checks", instrument(mx, "/api/checks", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/checks", instrument(a.mx, "/api/checks", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			writeJSON(w, http.StatusOK, st.listChecks())
+			writeJSON(w, http.StatusOK, a.store.listChecks())
 		case http.MethodPost:
 			var body struct {
 				URL       string `json:"url"`
@@ -237,7 +243,7 @@ func main() {
 			if body.IntervalS <= 0 {
 				body.IntervalS = 30
 			}
-			c := st.addCheck(body.URL, body.IntervalS)
+			c := a.store.addCheck(body.URL, body.IntervalS)
 			slog.Info("check created", "id", c.ID, "url", c.URL)
 			writeJSON(w, http.StatusCreated, c)
 		default:
@@ -246,10 +252,10 @@ func main() {
 		}
 	}))
 
-	mux.HandleFunc("/api/results", instrument(mx, "/api/results", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/results", instrument(a.mx, "/api/results", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			writeJSON(w, http.StatusOK, st.listResults())
+			writeJSON(w, http.StatusOK, a.store.listResults())
 		case http.MethodPost:
 			var res Result
 			if err := json.NewDecoder(r.Body).Decode(&res); err != nil {
@@ -257,7 +263,7 @@ func main() {
 				return
 			}
 			res.ObservedAt = time.Now().UTC()
-			st.addResult(res)
+			a.store.addResult(res)
 			writeJSON(w, http.StatusAccepted, res)
 		default:
 			w.Header().Set("Allow", "GET, POST")
@@ -265,10 +271,19 @@ func main() {
 		}
 	}))
 
+	return mux
+}
+
+func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	a := newApp()
+
 	addr := ":" + env("PORT", "8080")
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           mux,
+		Handler:           a.routes(),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
@@ -276,9 +291,9 @@ func main() {
 		// Stand-in for real startup work (migrations, cache warm). Module 06
 		// replaces it with a genuine Postgres connection check.
 		time.Sleep(2 * time.Second)
-		readyMu.Lock()
-		ready = true
-		readyMu.Unlock()
+		a.readyMu.Lock()
+		a.ready = true
+		a.readyMu.Unlock()
 		slog.Info("ready to serve traffic")
 	}()
 
