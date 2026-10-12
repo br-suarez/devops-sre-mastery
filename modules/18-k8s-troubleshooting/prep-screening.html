@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prep Screening — K8s Support Engineer</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d;
+    --fg: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --red: #f85149; --yellow: #d29922; --purple: #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--fg); font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; line-height: 1.65; padding: 24px; max-width: 900px; margin: 0 auto; }
+  h1 { color: var(--accent); font-size: 1.7em; margin-bottom: 4px; }
+  .sub { color: var(--muted); margin-bottom: 28px; font-size: 0.95em; }
+  h2 { color: var(--purple); margin: 36px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); font-size: 1.3em; }
+  h3 { color: var(--accent); margin: 20px 0 8px; font-size: 1.05em; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin: 12px 0; }
+  .tag { display: inline-block; font-size: 0.75em; padding: 2px 10px; border-radius: 12px; font-weight: 600; margin-right: 6px; }
+  .tag.s { background: #1f3a5f; color: var(--accent); }
+  .tag.t { background: #1f6f3a; color: var(--green); }
+  .tag.r { background: #1f6f3a; color: var(--green); }
+  .star b { color: var(--yellow); }
+  p { margin: 8px 0; }
+  ul { margin: 8px 0 8px 22px; }
+  li { margin: 4px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; font-size: 0.93em; }
+  th { background: #21262d; color: var(--accent); }
+  code { background: #21262d; padding: 2px 7px; border-radius: 5px; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.88em; color: #79c0ff; }
+  .phrase { color: var(--green); font-style: italic; }
+  .warn { color: var(--yellow); }
+  .quiz-q { font-weight: 600; margin-top: 14px; }
+  .ans { color: var(--green); }
+  .wrong { color: var(--red); text-decoration: line-through; }
+  .footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85em; text-align: center; }
+  .badge { background: #1f6f3a; color: var(--green); border-radius: 6px; padding: 1px 8px; font-size: 0.85em; font-weight: 700; }
+  .badge.half { background: #4a380f; color: var(--yellow); }
+  .en { color: var(--purple); font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>🎯 Prep Screening — Kubernetes Technical Support Engineer</h1>
+<p class="sub">Digis (Fiverr) · Cliente: plataforma Vision AI · Screening call: <b>miércoles 30 sep, 8:00 am CST</b> · 30 min con Olga Titienkova</p>
+
+<!-- ==================== CHEAT SHEET ==================== -->
+<h2>⚡ Frases gancho (repaso de 5 min pre-call)</h2>
+<div class="card">
+<ul>
+  <li>"<span class="phrase">CrashLoopBackOff es un síntoma, no un diagnóstico — la causa está en el exit code y los events.</span>"</li>
+  <li>"<span class="phrase">Exit 0 en un crash significa que la app salió bien: revisa probes antes de tocar la aplicación.</span>"</li>
+  <li>"<span class="phrase">El asesino importa: kernel (OOMKill, 137) vs kubelet (probe, reinicia y lo anuncia en events).</span>"</li>
+  <li>"<span class="phrase">liveness mata y reinicia; readiness solo te saca del Service.</span>"</li>
+  <li>"<span class="phrase">137 = 128 + 9 (SIGKILL) · 143 = 128 + 15 (SIGTERM graceful)</span>"</li>
+  <li>"<span class="phrase">Sin CNI instalado, el nodo aparece NotReady.</span>"</li>
+  <li class="en">"I reproduced controlled OOMKills in my own lab to understand the boundary between cgroup and node."</li>
+</ul>
+</div>
+
+<!-- ==================== TABLA FORENSE ==================== -->
+<h2>🔬 Tabla forense — vivida en el lab (kind: lab-soporte)</h2>
+<table>
+  <tr><th>Escenario</th><th>Asesino</th><th>Exit code</th><th>Reason</th><th>Dónde vive la muerte</th><th>Reinicios</th></tr>
+  <tr><td>OOMKill (Esc. 1)</td><td>kernel / cgroup</td><td><b>137</b></td><td>OOMKilled</td><td><code>state</code> (Job → pod nuevo) / <code>lastState</code> (Deployment)</td><td>pods nuevos con backoff 10s→20s→40s</td></tr>
+  <tr><td>Probe fantasma (Esc. 2)</td><td>kubelet</td><td><b>0</b></td><td>Completed</td><td><code>lastState</code></td><td>mismo pod, RESTARTS sube cada 30s (= period × threshold)</td></tr>
+  <tr><td>Grace period excedida</td><td>kubelet (forzado)</td><td><b>137</b></td><td>Error/Killed</td><td><code>lastState</code></td><td>mismo pod</td></tr>
+  <tr><td>Apagado normal</td><td>—</td><td><b>143</b></td><td>Completed</td><td>—</td><td>—</td></tr>
+  <tr><td>Node NotReady (Esc. 3)</td><td>kubelet del nodo</td><td>—</td><td>heartbeat congelado</td><td>Conditions del nodo + taints <code>unreachable:NoExecute</code></td><td>pods: 300s de gracia → Terminating → re-scheduled (o Pending)</td></tr>
+  <tr><td>ImagePullBackOff (Esc. 4)</td><td>supply chain</td><td>—</td><td>ErrImagePull → ImagePullBackOff</td><td>Events (explícito); NO hay lastState ni logs — nunca existió contenedor</td><td>backoff con cap ~5 min</td></tr>
+  <tr><td>DNS intermitente (Esc. 5)</td><td>CoreDNS / ndots:5</td><td>—</td><td>— (todo Running)</td><td>timeout en nslookup, search list de 3 intentos por nombre</td><td>nada muere — latencia intermitente</td></tr>
+</table>
+
+<div class="card">
+<h3>Kubectl de diagnóstico (los que ya corriste)</h3>
+<ul>
+  <li><code>kubectl describe pod &lt;pod&gt;</code> → Last State, Reason, Exit Code, Events</li>
+  <li><code>kubectl get pod -o jsonpath='{.status.containerStatuses[0].lastState.terminated.exitCode}'</code> → muerte previa en Deployment</li>
+  <li><code>kubectl get events -n &lt;ns&gt; --sort-by=.lastTimestamp</code> → mejor que describe para events repetidos</li>
+  <li><code>kubectl exec deploy/&lt;x&gt; -- curl -s -o /dev/null -w "%{http_code}" localhost/path</code> → ver lo que el kubelet ve</li>
+  <li><code>kubectl top pods</code> → usage real vs límite (OOMKill: límite bajo + usage alto)</li>
+</ul>
+<h3>Lecciones finas que casi nadie dice</h3>
+<ul>
+  <li><b>QoS:</b> Guaranteed exige requests == limits en <b>memoria Y CPU</b>. Solo memoria = Burstable. Nada de nada = BestEffort.</li>
+  <li><b>Job template inmutable</b> → <code>field is immutable</code>; remediación: delete + re-apply. Deployments SÍ son mutables (rolling update, nuevo ReplicaSet hash).</li>
+  <li><b>Reinicio rítmico</b> (intervalos regulares) = probe. Muerte silenciosa sin event = OOM.</li>
+  <li><b>Probes:</b> liveness = mata y reinicia · readiness = te saca del Service (pod sigue vivo) · startup = bloquea las otras hasta arrancar (apps de arranque lento).</li>
+  <li><b>App lenta con pods Ready:</b> CPU throttling (limits bajos), DNS lento (ndots:5, CoreDNS), readiness permisiva, dependencias externas.</li>
+  <li><b>Escalado responsable:</b> "pedí permiso, no perdón" — ownership sin bypassar al dueño de la relación.</li>
+  <li><b>Current-context primero:</b> <code>kubectl config current-context</code> antes de diagnosticar CUALQUIER cosa — operar contra el cluster equivocado es el error #1 (vivido en el Esc. 3 con kubelabs-final).</li>
+  <li><b>Node NotReady:</b> scope primero (¿un nodo o todos?) → desde el nodo <code>curl -k https://&lt;api&gt;:6443/healthz</code> separa red de kubelet → <code>systemctl status kubelet</code> + <code>journalctl -u kubelet</code>. Certificados vencidos del kubelet = clásico en edge.</li>
+  <li><b>Eventos con reintentos:</b> agrupa por patrón, el primer error no siempre es la causa raíz (Esc. 4: primer pull falló por DNS blip, la causa era la imagen).</li>
+  <li><b>DNS:</b> <code>options ndots:5</code> = 3 consultas desperdiciadas por nombre externo. Fixes: <code>dnsConfig ndots:1</code>, FQDN con punto final (<code>api.x.com.</code>), NodeLocal DNSCache.</li>
+  <li><b>Pending + FailedScheduling:</b> no es un crash — es el scheduler: requests > allocatable, affinity, taints sin toleration.</li>
+</ul>
+</div>
+
+<!-- ==================== HISTORIAS ==================== -->
+<h2>📖 Las tres historias STAR</h2>
+
+<div class="card">
+<h3><span class="tag s">H1</span> Truist — diagnóstico (pensamiento crítico)</h3>
+<p class="star"><b>S:</b> Cliente bancario con fallas de transferencia MFT. Dos personas lo trabajaron y lo diagnosticaron como UN problema.</p>
+<p class="star"><b>T:</b> Reconstruir el diagnóstico completo y recuperar la confianza de un cliente frustrado.</p>
+<p class="star"><b>A:</b> El error mezclaba dos cosas: <i>Cannot Authenticate</i> (SSH) y <i>PGP Error: Cannot Decrypt</i> (cifrado). ¿Por qué un solo síntoma tiene dos causas? Bajé ambas llaves, las importé, verifiqué: <b>ambas vencidas</b>. Cada quien solo había visto la mitad. Reporté al PSC — sin respuesta en plazo razonable. Tomé ownership: pedí permiso para una llamada conjunta con el cliente e ingeniería. En vivo: generamos par PGP nuevo, rotamos SSH, configuré en caliente, reenviamos un archivo crítico — pasó a la primera.</p>
+<p class="star"><b>R:</b> Flujo restaurado. El cliente pidió que YO atendiera sus tickets. Regla: <span class="phrase">"cuando el síntoma no cuadra con una sola causa, desconfía del diagnóstico heredado y verifica los fundamentos tú mismo."</span></p>
+<p><b>Coaching:</b> el gancho es la pregunta inicial (decirla con énfasis) · no criticar al L2 ("había fragmentos del diagnóstico repartidos — mi aporte fue unirlos") · PSC = decisión, no queja · cierre con el aprendizaje.</p>
+</div>
+
+<div class="card">
+<h3><span class="tag s">H2</span> OOMKill — triage (profundidad técnica honesta)</h3>
+<p class="star"><b>S:</b> Incidente escalado: "la base de datos se reinicia constantemente" — tratado como problema de la aplicación.</p>
+<p class="star"><b>T:</b> Determinar causa raíz antes de escalar a L2, para remediación correcta a la primera.</p>
+<p class="star"><b>A:</b> Lo primero en un pod que se reinicia: <b>el motivo del último reinicio</b> — <code>describe</code> + <code>jsonpath lastState.terminated.reason</code> → <b>OOMKilled</b>. No es la app: es el límite de memoria mal dimensionado. Crucé con <code>kubectl top</code>. Preparé la nota de remediación para L2 y <b>reproduje el escenario en mi cluster personal</b> — incluida la variante con probes: mismo CrashLoopBackOff visible, causa completamente distinta.</p>
+<p class="star"><b>R:</b> Remediación aplicada a la primera, sin rebote del ticket. Regla: <span class="phrase">"CrashLoopBackOff es un síntoma, no un diagnóstico."</span></p>
+<p><b>Posicionamiento honesto del rol actual:</b> "Hago el triage de primera línea: diagnostico, reproduzco el escenario en mi propio cluster, y preparo la remediación documentada para que L2 la ejecute." <b>+</b> ahora con evidencia: <span class="en">"I reproduced controlled OOMKills in my own kind lab."</span></p>
+</div>
+
+<div class="card">
+<h3><span class="tag s">H3</span> Truist — comunicación bajo presión (client-facing)</h3>
+<p class="star"><b>S:</b> Cliente bancario con transferencias caídas, días sin respuesta coherente — cada persona le daba una explicación parcial. Confianza perdida.</p>
+<p class="star"><b>T:</b> El ticket no era mío; yo no era owner de la relación (el PSC sí). Resolver Y recuperar la confianza sin pisar el proceso.</p>
+<p class="star"><b>A:</b> Entendí que el problema era de comunicación, no solo técnico. Tres cosas: (1) verifiqué el diagnóstico completo ANTES de hablar — llegué con la respuesta, no con otra mitad; (2) <b>pedí permiso, no perdón</b> — llamada conjunta propuesta al PSC con agenda clara; (3) trabajé en vivo y transparente: llaves nuevas juntos, configuración en caliente explicada, prueba real de cierre. El cliente interrumpió varias veces con frustración: lo dejé terminar y respondí cada queja con un dato concreto, no con disculpas.</p>
+<p class="star"><b>R:</b> Flujo restaurado ese día + el cliente pidió que yo atendiera sus tickets. Regla: <span class="phrase">"Cuando el cliente pierde la confianza, no la recuperas con disculpas — la recuperas con hechos verificables en vivo."</span></p>
+<p><b>Follow-ups practicados:</b> si el PSC dice no → documentación técnica con evidencia "para que el cliente no dependa de mi disponibilidad" · frustración → <span class="en">"I let him vent, then answered with facts, not apologies"</span> · diferente hoy → <b>comunicar antes de tener la respuesta completa</b>: "aún no sé la causa, pero esto ya descarté, a esta hora te escribo de nuevo" — el silencio es lo que el cliente no tolera.</p>
+</div>
+
+<!-- ==================== VISION AI / CONNECTWISE ==================== -->
+<h2>🤖 Vision AI + ConnectWise — 2 líneas, nada que memorizar</h2>
+<div class="card">
+<p><b>Si preguntan por ConnectWise:</b> <span class="en">"I use [herramienta actual de Equifax] daily — ConnectWise is the same PSA model: tickets, SLAs, documentation. Different interface, same workflow."</span> No decir que lo instalaste.</p>
+<p><b>Si preguntan por Vision AI:</b> <span class="en">"I haven't worked with Vision AI in production, but I'm genuinely curious about the workload — I've started experimenting with inference workloads in my own cluster to understand the support profile."</span> Honestidad + iniciativa. El screening no pide más que eso.</p>
+<p class="warn">Trabajamos esto en la simulación del martes — no memorizar vocabulario técnico de Vision AI para un screening.</p>
+</div>
+
+<!-- ==================== KUBECTL BASICO ==================== -->
+<h2>⌨️ kubectl de repaso — lo básico de todo screening</h2>
+<div class="card">
+<h3>Ver / listar (el 80% de lo que te van a preguntar)</h3>
+<ul>
+  <li><code>kubectl get pods</code> · <code>kubectl get pods -n &lt;ns&gt;</code> · <code>kubectl get pods -A</code> (todos los namespaces)</li>
+  <li><code>kubectl get pods -o wide</code> — agrega IP y nodo (¿DÓNDE corre?)</li>
+  <li><code>kubectl get all -n &lt;ns&gt;</code> — pods + services + deployments + replicasets de golpe</li>
+  <li><code>kubectl get nodes</code> · <code>kubectl get svc</code> · <code>kubectl get deploy</code> · <code>kubectl get jobs</code> · <code>kubectl get ns</code></li>
+  <li><code>kubectl get events -n &lt;ns&gt; --sort-by=.lastTimestamp</code> — el historial de qué pasó, ordenado</li>
+</ul>
+<h3>Describir / ver (cuando algo está raro)</h3>
+<ul>
+  <li><code>kubectl describe pod &lt;pod&gt;</code> — estado, reason del último reinicio, events. EL comando de diagnóstico</li>
+  <li><code>kubectl logs &lt;pod&gt;</code> · <code>kubectl logs -f &lt;pod&gt;</code> (seguir en vivo) · <code>kubectl logs --previous</code> (logs del contenedor ANTES del último reinicio — clásico de entrevista)</li>
+  <li><code>kubectl top pods</code> · <code>kubectl top nodes</code> — consumo actual vs límites (necesita metrics-server)</li>
+  <li><code>kubectl exec -it &lt;pod&gt; -- bash</code> — entrar al contenedor; <code>kubectl exec &lt;pod&gt; -- curl localhost:8080/health</code> — ver lo que la probe ve</li>
+</ul>
+<h3>Aplicar / editar (con cuidado)</h3>
+<ul>
+  <li><code>kubectl apply -f file.yaml</code> — crear o actualizar</li>
+  <li><code>kubectl edit deploy &lt;name&gt;</code> — edición en vivo (Deployments SÍ, Jobs NO: template inmutable)</li>
+  <li><code>kubectl delete pod &lt;pod&gt;</code> — el pod se recrea solo si lo maneja un Deployment (restart del servicio "a lo bruto")</li>
+  <li><code>kubectl scale deploy &lt;name&gt; --replicas=3</code></li>
+  <li><code>kubectl set image deploy/&lt;name&gt; container=&lt;img&gt;:v2</code> — rolling update manual</li>
+  <li><code>kubectl rollout status deploy/&lt;name&gt;</code> · <code>kubectl rollout undo deploy/&lt;name&gt;</code> — ver y revertir un update</li>
+</ul>
+<h3>Contexto / cluster</h3>
+<ul>
+  <li><code>kubectl config get-contexts</code> · <code>kubectl config use-context &lt;ctx&gt;</code> — con qué cluster estoy hablando</li>
+  <li><code>kubectl cluster-info</code> · <code>kubectl api-resources</code> (qué tipos existen) · <code>kubectl explain pod.spec</code> (documentación integrada)</li>
+</ul>
+<p class="warn">Truco anti-herrumbre: <code>kubectl &lt;comando&gt; --help</code> y <code>kubectl explain &lt;recurso&gt;</code> responden el 90% de las dudas EN la terminal — también en la entrevista si es hands-on.</p>
+</div>
+
+<!-- ==================== SCREENING ==================== -->
+<h2>📞 Qué esperar en la screening (30 min)</h2>
+<div class="card">
+<ol>
+  <li><b>5-10 min — project talk</b> (ella habla). Toma notas. Preguntas tuyas:
+    <ul>
+      <li class="en">"Is the support team follow-the-sun or single time zone?"</li>
+      <li class="en">"Is there compensated on-call, or office hours only?"</li>
+    </ul></li>
+  <li><b>10-15 min — K8s conceptuales:</b> OOMKill vs probe failing (con comandos) · CrashLoopBackOff ("síntoma, no diagnóstico") · nodos NotReady (CNI/kubelet) · 137 vs 143 · app lenta con pods Ready (throttling, DNS). Todo esto ya lo viviste.</li>
+  <li><b>5 min — salary:</b> ancla <b>$3,500–$4,000</b> ya dicha. Si presiona por cifra exacta: <span class="en">"It depends on the full scope — I'd like to hear the benefits and conditions first."</span> No bajar de $3,500 por teléfono.</li>
+</ol>
+<p><b>Intro de 2 min (ensayarla):</b> support engineer en plataforma MFT/crypto para clientes bancarios → triage y diagnóstico de incidentes + soporte directo al cliente en inglés → K8s/Linux/Docker en producción y en lab personal → lo que me atrajo del rol: stack híbrido (cloud/edge/on-prem), Vision AI es un dominio nuevo que ya empecé a explorar por mi cuenta.</p>
+</div>
+
+<!-- ==================== QUIZZES ==================== -->
+<h2>🧪 Quizzes — respuestas correctas</h2>
+<div class="card">
+<p class="quiz-q">Escenario 1 — OOMKill <span class="badge">4/5</span></p>
+<ul>
+  <li>143 = SIGTERM graceful (128+15) ✅</li>
+  <li>Penúltima muerte en Deployment → <code>lastState.terminated.exitCode</code> ✅</li>
+  <li>requests==limits solo en memoria, CPU sin definir → <span class="ans">Burstable</span> <span class="wrong">(dije Guaranteed ❌ — Guaranteed exige AMBOS recursos)</span></li>
+  <li>Probe HTTP 500 → reproducir el endpoint con exec+curl antes de tocar recursos ✅</li>
+  <li>Job immutable → delete + re-apply ✅</li>
+</ul>
+<p class="quiz-q">Escenario 2 — Probes <span class="badge">5/5</span></p>
+<ul>
+  <li>Exit 0 + Completed → app sana, algo externo la mata ✅</li>
+  <li>Readiness fallando → pod Running pero fuera del Service, sin reinicio ✅</li>
+  <li>App de arranque lento → startupProbe con failureThreshold amplio ✅</li>
+  <li>Kubelet mata → SIGTERM + grace period; SIGKILL solo si no muere ✅</li>
+  <li>"Borra la liveness" → explicar riesgo + alternativa (arreglar el endpoint) ✅</li>
+</ul>
+<p class="quiz-q">Escenario 3 — Node NotReady <span class="badge">5/5</span></p>
+<ul>
+  <li>NotReady a los <b>40s</b> del último heartbeat (node-monitor-grace-period) ✅</li>
+  <li>Kubelet muerto → pods "frozen" (siguen corriendo, sin reinicios ni probes) ✅</li>
+  <li>Tras 300s de toleration → Terminating → re-scheduling (~5 min en cluster multi-nodo) ✅</li>
+  <li>5 de 6 nodos NotReady → problema del control plane, no de los nodos (scope primero) ✅</li>
+  <li>Kubelet vivo + conectividad OK → <code>journalctl -u kubelet</code> (certs vencidos en edge) ✅</li>
+</ul>
+<p class="quiz-q">Escenario 4 — ImagePullBackOff <span class="badge">5/5</span></p>
+<ul>
+  <li>logs falla — nunca existió contenedor ✅</li>
+  <li>Staging OK / prod muere → registry privado sin imagePullSecrets (en el namespace del POD) ✅</li>
+  <li>429 → rate limit del registry ✅</li>
+  <li>Eventos mixtos → agrupar por patrón, no quedarse con el primer error ✅</li>
+  <li>Backoff de pull con cap ~5 min ✅</li>
+</ul>
+<p class="quiz-q">Escenario 5 — DNS <span class="badge">5/5</span></p>
+<ul>
+  <li>Lentitud intermitente sin resource issues → sospechar DNS primero ✅</li>
+  <li>Pod que solo habla con afuera → <code>dnsConfig ndots:1</code> ✅</li>
+  <li>CoreDNS muerto → pods corriendo OK, nuevos levantan Running pero funcionales-vegetales ✅</li>
+  <li>FQDN con punto final → evita la search list ✅</li>
+  <li>Pending + FailedScheduling → scheduler (requests/affinity/taints), no un crash ✅</li>
+</ul>
+</div>
+
+<!-- ==================== PLAN ==================== -->
+<h2>📅 Plan</h2>
+<div class="card">
+<p><b>Fin de lab:</b> 5 escenarios completos ✅ — OOMKill · Probes · Node NotReady · ImagePullBackOff · DNS. Todos reproducidos, diagnosticados y remediados con evidencia. Quizzes: 4/5, 5/5, 5/5, 5/5, 5/5.</p>
+<p><b>Viernes:</b> entrevista técnica con el equipo del cliente (~1h, deeper K8s + live troubleshooting).</p>
+<p><b>Jueves (pre-entrevista):</b> repaso HTML 20-30 min · frases gancho · tabla forense completa (7 filas) · simulación exprés si quieres. Dormir bien.</p>
+</div>
+
+<div class="footer">Lab: kind lab-soporte · ~/Projects/lab-soporte/ · 5 escenarios cerrados con evidencia · Actualizado 1-oct-2026</div>
+</body>
+</html>

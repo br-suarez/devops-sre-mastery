@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-reporte
+  namespace: cliente-truist
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: reporte
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: stress
+        image: polinux/stress
+        command: ["stress"]
+        args: ["--vm", "1", "--vm-bytes", "900M", "--timeout", "60s"]
+        resources:
+          limits:
+            memory: 1Gi

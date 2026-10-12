@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingesta-video
+  namespace: cliente-truist
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ingesta
+  template:
+    metadata:
+      labels:
+        app: ingesta
+    spec:
+      containers:
+      - name: ingesta
+        image: nginx:1.27-no-existe
+        ports:
+        - containerPort: 80
