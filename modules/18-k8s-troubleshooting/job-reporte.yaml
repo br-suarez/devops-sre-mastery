@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: job-reporte
-  namespace: cliente-truist
+  namespace: cliente-acme
 spec:
   backoffLimit: 3
   template:

@@ -19,7 +19,7 @@ these are not notes, they are incidents I lived.
 
 ```bash
 kind create cluster --name lab-soporte
-kubectl create namespace cliente-truist
+kubectl create namespace cliente-acme
 
 # Scenarios 1-2: apply the yamls and work the break-fix diagnosis
 kubectl apply -f job-reporte.yaml
@@ -43,7 +43,7 @@ bash break.sh
 ## Context
 
 Interview prep lab for a Kubernetes Support Engineer role (Sep–Oct 2026),
-built on kind (`lab-soporte`), namespace `cliente-truist` — one "customer"
+built on kind (`lab-soporte`), namespace `cliente-acme` — one "customer"
 per namespace, as in real support work. Final quiz score: 29/30.
 
 `prep-screening.html` also contains the complete exit-code forensics table

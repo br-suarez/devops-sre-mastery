@@ -4,7 +4,7 @@
 # Uso: bash ~/Projects/lab-soporte/break.sh
 
 set -e
-K="kubectl -n cliente-truist"
+K="kubectl -n cliente-acme"
 
 $K delete deploy pagos-api --ignore-not-found >/dev/null 2>&1 || true
 $K delete svc pagos-svc --ignore-not-found >/dev/null 2>&1 || true
