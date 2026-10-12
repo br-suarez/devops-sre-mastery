@@ -1,49 +1,50 @@
 # K8s Support Lab — Troubleshooting Scenarios
 
-Laboratorio de troubleshooting de Kubernetes orientado a soporte técnico (Support Engineer).
-Cada escenario fue reproducido, diagnosticado y remediado en un cluster kind real —
-no son apuntes, son incidentes vividos.
+Kubernetes troubleshooting lab oriented to Technical Support Engineering.
+Every scenario was reproduced, diagnosed and remediated on a live kind cluster —
+these are not notes, they are incidents I lived.
 
-## Escenarios
+## Scenarios
 
-| # | Escenario | Síntoma del ticket | Firma forense |
-|---|-----------|-------------------|---------------|
-| 1 | OOMKill | "El job falla desde que aumentó el reporte" | exit 137, Reason OOMKilled, backoff exponencial |
-| 2 | Probe fantasma | "El servicio se cae cada 3 minutos, logs limpios" | exit 0 + Completed, reinicio rítmico period×threshold |
-| 3 | Node NotReady | "El dashboard no actualiza, el nodo está raro" | heartbeat congelado, taints unreachable:NoExecute, tolerations 300s |
-| 4 | ImagePullBackOff | "El despliegue nuevo no levanta" | ErrImagePull → ImagePullBackOff, causa explícita en events |
-| 5 | DNS intermitente | "Lento SOLO a veces, todo Running" | ndots:5, search list, CoreDNS subdimensionado |
-| 6 | Service sin endpoints | "El servicio ignora los pods sanos" | selector mismatch — `kubectl get endpoints` lo delata |
+| # | Scenario | Ticket symptom | Forensic signature |
+|---|----------|----------------|--------------------|
+| 1 | OOMKill | "The report job fails since we increased the data size" | exit 137, Reason OOMKilled, exponential backoff across new pods |
+| 2 | Ghost probe | "The service drops every 3 minutes, logs are clean" | exit 0 + Completed, rhythmic restarts (period × threshold) |
+| 3 | Node NotReady | "The dashboard stopped updating, the node looks weird" | frozen heartbeat, unreachable:NoExecute taints, 300s tolerations |
+| 4 | ImagePullBackOff | "The new deployment won't start" | ErrImagePull → ImagePullBackOff, explicit cause in events |
+| 5 | Intermittent DNS | "Slow ONLY sometimes, everything Running" | ndots:5, search list, undersized CoreDNS |
+| 6 | Service with no endpoints | "The service ignores healthy pods" | selector mismatch — `kubectl get endpoints` gives it away |
 
-## Uso
+## Usage
 
 ```bash
 kind create cluster --name lab-soporte
 kubectl create namespace cliente-truist
 
-# Escenarios 1-2: aplicar los yamls y seguir el diagnóstico en break-fix
+# Scenarios 1-2: apply the yamls and work the break-fix diagnosis
 kubectl apply -f job-reporte.yaml
 kubectl apply -f deploy-web.yaml
 
-# Escenario 6: inyección automatizada (diagnosticar ANTES de leer el script)
+# Scenario 6: automated injection (diagnose BEFORE reading the script)
 bash break.sh
 ```
 
-## Lecciones que dejó el lab
+## Lessons the lab left behind
 
-- CrashLoopBackOff es un síntoma, no un diagnóstico — la causa está en el exit code y los events
-- El asesino importa: kernel (OOMKill, 137) vs kubelet (probe, reinicia y lo anuncia)
-- liveness mata y reinicia; readiness solo te saca del Service
-- kubectl config current-context antes de cualquier diagnóstico (cluster equivocado = error #1)
-- En eventos con reintentos, agrupa por patrón: el primer error no siempre es la causa raíz
-- busybox nslookup no usa la search list — NXDOMAIN ≠ timeout
-- 137 = 128+9 (SIGKILL) · 143 = 128+15 (SIGTERM) · 0 + Completed = algo externo mató una app sana
+- CrashLoopBackOff is a symptom, not a diagnosis — the cause lives in the exit code and the events
+- The killer matters: kernel (OOMKill, 137) vs kubelet (probe, restarts and announces it in events)
+- liveness kills and restarts; readiness only pulls you out of the Service
+- `kubectl config current-context` before any diagnosis (wrong cluster = mistake #1)
+- On events with retries, group by pattern: the first error is not always the root cause
+- busybox nslookup does not use the search list — NXDOMAIN ≠ timeout
+- 137 = 128+9 (SIGKILL) · 143 = 128+15 (SIGTERM) · 0 + Completed = something external killed a healthy app
+- Mitigate hot (kubectl patch), then fix the root (commit to the repo) — the cluster reflects Git, not the other way around
 
-## Contexto
+## Context
 
-Lab de preparación para entrevistas de Kubernetes Support Engineer (sept-oct 2026),
-construido en kind (`lab-soporte`), namespace `cliente-truist` — un "cliente" por namespace,
-como en soporte real. Quiz final: 29/30.
+Interview prep lab for a Kubernetes Support Engineer role (Sep–Oct 2026),
+built on kind (`lab-soporte`), namespace `cliente-truist` — one "customer"
+per namespace, as in real support work. Final quiz score: 29/30.
 
-`prep-screening.html` contiene además la tabla forense completa de exit codes
-(137/143/0), las lecciones finas de cada escenario y el checklist de diagnóstico.
+`prep-screening.html` also contains the complete exit-code forensics table
+(137/143/0), the fine-grained lessons per scenario and the diagnosis checklist.
