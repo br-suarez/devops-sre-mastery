@@ -13,7 +13,7 @@ tres semanas después no sirve para nada.
 |---|---|---|---|---|---|---|---|
 | 00 | Bootstrap & Environment | ✅ | — | 2026-08-07 | 2026-08-07 | 2 / 2 | 4 |
 | 01 | Linux & Scripting | ✅ | — | 2026-08-11 | 2026-09-17 | 4 / 4 | 4 |
-| 02 | NGINX as Edge | 🔵 | ⬜ | 2026-09-06 | | 4 / | |
+| 02 | NGINX as Edge | 🔵 | — | 2026-09-06 | | 4 / 3 | |
 | 03 | Docker & Supply Chain | ⬜ | ⬜ | | | 4 / | |
 | 04 | Kubernetes Core | ⬜ | ⬜ | | | 4 / | |
 | 05 | Gateway API | ⬜ | ⬜ | | | 5 / | |
