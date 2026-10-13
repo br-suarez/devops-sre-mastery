@@ -190,6 +190,7 @@
     padding-top: 16px;
     border-top: 1px solid var(--border-color);
   }
+  .status-done-row td { background: rgba(63, 185, 80, 0.06); }
 </style>
 </head>
 <body>
@@ -248,12 +249,12 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
+        <tr class="status-done-row">
           <td><b>Phase 1</b></td>
-          <td>Oct 12, 2026</td>
+          <td>Oct 12 – Oct 13, 2026</td>
           <td><span class="tag tag-sre">SRE 02</span></td>
-          <td>1</td>
-          <td><b>NGINX Edge (finish):</b> log forensics lab. <span class="status-done">02.01/02.02/02.03 closed ✅</span></td>
+          <td>2</td>
+          <td><b>NGINX Edge:</b> log forensics + rate limiting labs. <span class="status-done">Module 02 CLOSED — 5/5 labs ✅</span></td>
         </tr>
         <tr>
           <td><b>Phase 2</b></td>
@@ -360,7 +361,7 @@
         <tr>
           <td><b>02</b></td>
           <td>NGINX as Edge</td>
-          <td><span class="status-wip">🔵 In Progress (3/4 labs)</span></td>
+          <td><span class="status-done">✅ Closed Oct 13 — 5/5 labs</span></td>
           <td>4</td>
           <td>Pulse behind NGINX Proxy with configured TLS.</td>
         </tr>
