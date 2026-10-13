@@ -1,4 +1,4 @@
-# DevOps / SRE Mastery — Bryan M. Suarez
+# DevOps / SRE Mastery
 
 A production-shaped reliability platform, built one layer at a time, and the
 curriculum that produces it.
