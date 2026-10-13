@@ -253,9 +253,13 @@ func (a *app) routes() http.Handler {
 	}))
 
 	mux.HandleFunc("/api/results", instrument(a.mx, "/api/results", func(w http.ResponseWriter, r *http.Request) {
+		user := r.Header.Get("X-User")
 		switch r.Method {
 		case http.MethodGet:
-			writeJSON(w, http.StatusOK, a.store.listResults())
+			writeJSON(w, http.StatusOK, map[string]any{
+			    "user":    user,
+			    "results": a.store.listResults(),
+			})
 		case http.MethodPost:
 			var res Result
 			if err := json.NewDecoder(r.Body).Decode(&res); err != nil {
